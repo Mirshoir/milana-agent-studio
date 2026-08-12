@@ -15,6 +15,13 @@
       "when": 1786517021519,
       "tag": "0001_wakeful_morg",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786519377956,
+      "tag": "0002_lean_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }

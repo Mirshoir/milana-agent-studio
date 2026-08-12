@@ -63,3 +63,49 @@ export const releaseEvents = sqliteTable("release_events", {
   notes: text("notes").notNull().default(""),
   createdAt: text("created_at").notNull(),
 }, (table) => [index("idx_release_events_agent_created").on(table.agentId, table.createdAt)]);
+
+export const workflowDefinitions = sqliteTable("workflow_definitions", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  status: text("status").notNull().default("draft"),
+  nodesJson: text("nodes_json").notNull(),
+  edgesJson: text("edges_json").notNull(),
+  version: integer("version").notNull().default(1),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_workflow_definitions_updated").on(table.updatedAt)]);
+
+export const knowledgeFiles = sqliteTable("knowledge_files", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  storageKey: text("storage_key").notNull(),
+  chunkSize: integer("chunk_size").notNull(),
+  chunkOverlap: integer("chunk_overlap").notNull(),
+  chunkCount: integer("chunk_count").notNull(),
+  analysisJson: text("analysis_json").notNull(),
+  status: text("status").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_knowledge_files_agent_created").on(table.agentId, table.createdAt)]);
+
+export const fileChunks = sqliteTable("file_chunks", {
+  id: text("id").primaryKey(),
+  fileId: text("file_id").notNull(),
+  chunkIndex: integer("chunk_index").notNull(),
+  content: text("content").notNull(),
+  characterCount: integer("character_count").notNull(),
+  tokenEstimate: integer("token_estimate").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("idx_file_chunks_file_index").on(table.fileId, table.chunkIndex)]);
+
+export const promptAnalyses = sqliteTable("prompt_analyses", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceId: text("source_id"),
+  score: integer("score").notNull(),
+  analysisJson: text("analysis_json").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_prompt_analyses_agent_created").on(table.agentId, table.createdAt)]);

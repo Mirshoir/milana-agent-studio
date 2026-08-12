@@ -5,6 +5,11 @@ export function getD1() {
   return env.DB;
 }
 
+export function getFilesBucket() {
+  if (!env.FILES) throw new Error("Agent Studio file storage binding is unavailable.");
+  return env.FILES;
+}
+
 export async function ensureStudioSchema() {
   const db = getD1();
   await db.batch([
@@ -17,5 +22,13 @@ export async function ensureStudioSchema() {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_eval_runs_agent_created ON eval_runs(agent_id, created_at DESC)"),
     db.prepare("CREATE TABLE IF NOT EXISTS release_events (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, prompt_version_id TEXT NOT NULL, environment TEXT NOT NULL, action TEXT NOT NULL, approver TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_release_events_agent_created ON release_events(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS workflow_definitions (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft', nodes_json TEXT NOT NULL, edges_json TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_workflow_definitions_updated ON workflow_definitions(updated_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS knowledge_files (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, filename TEXT NOT NULL, mime_type TEXT NOT NULL, size_bytes INTEGER NOT NULL, storage_key TEXT NOT NULL, chunk_size INTEGER NOT NULL, chunk_overlap INTEGER NOT NULL, chunk_count INTEGER NOT NULL, analysis_json TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_knowledge_files_agent_created ON knowledge_files(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS file_chunks (id TEXT PRIMARY KEY, file_id TEXT NOT NULL, chunk_index INTEGER NOT NULL, content TEXT NOT NULL, character_count INTEGER NOT NULL, token_estimate INTEGER NOT NULL, created_at TEXT NOT NULL)"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_file_chunks_file_index ON file_chunks(file_id, chunk_index)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS prompt_analyses (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, source_type TEXT NOT NULL, source_id TEXT, score INTEGER NOT NULL, analysis_json TEXT NOT NULL, created_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_prompt_analyses_agent_created ON prompt_analyses(agent_id, created_at DESC)"),
   ]);
 }

@@ -1,0 +1,21 @@
+import { env } from "cloudflare:workers";
+
+export function getD1() {
+  if (!env.DB) throw new Error("Agent Studio database binding is unavailable.");
+  return env.DB;
+}
+
+export async function ensureStudioSchema() {
+  const db = getD1();
+  await db.batch([
+    db.prepare("CREATE TABLE IF NOT EXISTS agent_profiles (id TEXT PRIMARY KEY, registry_id INTEGER NOT NULL UNIQUE, name TEXT NOT NULL, squad TEXT NOT NULL, purpose TEXT NOT NULL, activation TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', active_version_id TEXT, updated_at TEXT NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS prompt_versions (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, version INTEGER NOT NULL, system_prompt TEXT NOT NULL, routing_rule TEXT NOT NULL, guardrails TEXT NOT NULL, model_tier TEXT NOT NULL DEFAULT 'small', status TEXT NOT NULL DEFAULT 'draft', change_note TEXT NOT NULL DEFAULT '', created_by TEXT NOT NULL DEFAULT 'Agent Studio', created_at TEXT NOT NULL)"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_prompt_versions_agent_version ON prompt_versions(agent_id, version)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_prompt_versions_agent_created ON prompt_versions(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS eval_cases (id TEXT PRIMARY KEY, title TEXT NOT NULL, language TEXT NOT NULL, customer_message TEXT NOT NULL, expected_behavior TEXT NOT NULL, tags TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS eval_runs (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, prompt_version_id TEXT, eval_case_id TEXT, customer_message TEXT NOT NULL, response TEXT NOT NULL, grounded_score REAL NOT NULL, language_score REAL NOT NULL, sales_score REAL NOT NULL, safety_score REAL NOT NULL, latency_ms INTEGER NOT NULL, status TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_eval_runs_agent_created ON eval_runs(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS release_events (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, prompt_version_id TEXT NOT NULL, environment TEXT NOT NULL, action TEXT NOT NULL, approver TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_release_events_agent_created ON release_events(agent_id, created_at DESC)"),
+  ]);
+}

@@ -1,0 +1,2 @@
+CREATE INDEX `idx_eval_runs_agent_created` ON `eval_runs` (`agent_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `idx_release_events_agent_created` ON `release_events` (`agent_id`,`created_at`);

@@ -1,0 +1,1730 @@
+[
+  {
+    "id": 1,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Sales Executive Orchestrator",
+    "purpose": "Owns the customer turn, sales objective, and final outcome.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 2,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Ingress Triage Agent",
+    "purpose": "Classifies the event before any expensive model call.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 3,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Intent Router",
+    "purpose": "Routes each request to the smallest relevant specialist set.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 4,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Multi-Intent Decomposer",
+    "purpose": "Splits one message into independently solvable customer needs.",
+    "activation": "On demand"
+  },
+  {
+    "id": 5,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Task Planner",
+    "purpose": "Builds a bounded execution plan for complex requests.",
+    "activation": "On demand"
+  },
+  {
+    "id": 6,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Agent Selector",
+    "purpose": "Chooses specialists from capability, cost, and confidence metadata.",
+    "activation": "On demand"
+  },
+  {
+    "id": 7,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Parallel Work Coordinator",
+    "purpose": "Runs independent product, price, and delivery checks concurrently.",
+    "activation": "On demand"
+  },
+  {
+    "id": 8,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Handoff Controller",
+    "purpose": "Transfers ownership between AI specialists or to a human.",
+    "activation": "On demand"
+  },
+  {
+    "id": 9,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Dependency Resolver",
+    "purpose": "Orders tasks when one result is required by another.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 10,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Budget & Latency Controller",
+    "purpose": "Enforces token, model, tool-call, and response-time limits.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 11,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Tool Permission Broker",
+    "purpose": "Allows only the tools and data required for the current task.",
+    "activation": "On demand"
+  },
+  {
+    "id": 12,
+    "squad": "Orchestration & Routing",
+    "wave": "Wave 1",
+    "agent": "Final Response Composer",
+    "purpose": "Combines verified outputs into one concise customer reply.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 13,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Conversation Context Resolver",
+    "purpose": "Reconstructs the meaning of short follow-ups from prior turns.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 14,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Thread Summarizer",
+    "purpose": "Maintains a compact, sales-relevant conversation state.",
+    "activation": "On demand"
+  },
+  {
+    "id": 15,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Reference Resolver",
+    "purpose": "Resolves phrases such as ‘this one’, ‘both’, and ‘the first model’.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 16,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Product Mention Memory",
+    "purpose": "Tracks every product, model, and variant already discussed.",
+    "activation": "On demand"
+  },
+  {
+    "id": 17,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Customer Identity Resolver",
+    "purpose": "Links known identities without merging uncertain customers.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 18,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Contact State Tracker",
+    "purpose": "Knows whether name, phone, location, or channel consent is missing.",
+    "activation": "On demand"
+  },
+  {
+    "id": 19,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Order State Tracker",
+    "purpose": "Tracks the customer’s cart and order progress across turns.",
+    "activation": "On demand"
+  },
+  {
+    "id": 20,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Call Request State Tracker",
+    "purpose": "Remembers requested callback, video call, and contact timing.",
+    "activation": "On demand"
+  },
+  {
+    "id": 21,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Customer Preference Memory",
+    "purpose": "Stores stated size, color, style, market, and buying preferences.",
+    "activation": "On demand"
+  },
+  {
+    "id": 22,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Duplicate Question Detector",
+    "purpose": "Avoids repeating questions already answered by the customer.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 23,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Contradiction Detector",
+    "purpose": "Flags conflicts between current messages, memory, and system truth.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 24,
+    "squad": "Conversation Context & Memory",
+    "wave": "Wave 1",
+    "agent": "Session Recovery Agent",
+    "purpose": "Restores a safe working state after delay, restart, or channel break.",
+    "activation": "On demand"
+  },
+  {
+    "id": 25,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Language Identifier",
+    "purpose": "Detects the customer’s language and script with confidence.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 26,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Language Continuity Agent",
+    "purpose": "Keeps replies in the customer’s established language.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 27,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Uzbek Latin Specialist",
+    "purpose": "Produces natural Uzbek Latin sales conversations.",
+    "activation": "On demand"
+  },
+  {
+    "id": 28,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Uzbek Cyrillic Specialist",
+    "purpose": "Handles Uzbek Cyrillic and script-appropriate phrasing.",
+    "activation": "On demand"
+  },
+  {
+    "id": 29,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Russian Specialist",
+    "purpose": "Produces accurate, natural Russian sales communication.",
+    "activation": "On demand"
+  },
+  {
+    "id": 30,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Kazakh Specialist",
+    "purpose": "Handles Kazakh leads and preserves commercial meaning.",
+    "activation": "On demand"
+  },
+  {
+    "id": 31,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "English Specialist",
+    "purpose": "Supports international English-language buyers.",
+    "activation": "On demand"
+  },
+  {
+    "id": 32,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Transliteration Agent",
+    "purpose": "Normalizes names, codes, and messages across scripts.",
+    "activation": "On demand"
+  },
+  {
+    "id": 33,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Code-Switching Agent",
+    "purpose": "Understands mixed-language messages without unwanted switching.",
+    "activation": "On demand"
+  },
+  {
+    "id": 34,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Locale Tone Agent",
+    "purpose": "Adapts politeness, formality, dates, numbers, and commercial tone.",
+    "activation": "On demand"
+  },
+  {
+    "id": 35,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Translation QA Agent",
+    "purpose": "Checks that translated quantities, prices, and conditions are unchanged.",
+    "activation": "On demand"
+  },
+  {
+    "id": 36,
+    "squad": "Language & Localization",
+    "wave": "Wave 1",
+    "agent": "Ambiguity Clarifier",
+    "purpose": "Asks one targeted language clarification only when necessary.",
+    "activation": "On demand"
+  },
+  {
+    "id": 37,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Instagram DM Agent",
+    "purpose": "Handles native Instagram direct-message behavior and constraints.",
+    "activation": "On demand"
+  },
+  {
+    "id": 38,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Instagram Comment Agent",
+    "purpose": "Responds safely to public comments without exposing private data.",
+    "activation": "On demand"
+  },
+  {
+    "id": 39,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Comment-to-DM Agent",
+    "purpose": "Moves qualified public interest into a private sales conversation.",
+    "activation": "On demand"
+  },
+  {
+    "id": 40,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Story Reply Agent",
+    "purpose": "Uses story context when interpreting a reply.",
+    "activation": "On demand"
+  },
+  {
+    "id": 41,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Reel & Post Context Agent",
+    "purpose": "Associates forwarded content with the right product or campaign.",
+    "activation": "On demand"
+  },
+  {
+    "id": 42,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Instagram Template Agent",
+    "purpose": "Selects compliant quick-reply and structured-message templates.",
+    "activation": "On demand"
+  },
+  {
+    "id": 43,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Telegram Private Agent",
+    "purpose": "Handles private Telegram conversations and attachments.",
+    "activation": "On demand"
+  },
+  {
+    "id": 44,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Telegram Group Agent",
+    "purpose": "Separates public group interaction from private lead handling.",
+    "activation": "On demand"
+  },
+  {
+    "id": 45,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "WhatsApp Agent",
+    "purpose": "Supports WhatsApp conversation and approved message-template rules.",
+    "activation": "On demand"
+  },
+  {
+    "id": 46,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Cross-Channel Identity Agent",
+    "purpose": "Links channel identities only when evidence supports the match.",
+    "activation": "On demand"
+  },
+  {
+    "id": 47,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Channel Policy Agent",
+    "purpose": "Applies per-channel privacy, formatting, and automation policies.",
+    "activation": "On demand"
+  },
+  {
+    "id": 48,
+    "squad": "Channel & Engagement",
+    "wave": "Wave 2",
+    "agent": "Reaction & Emoji Intent Agent",
+    "purpose": "Interprets reactions, symbols, and minimal engagement signals.",
+    "activation": "On demand"
+  },
+  {
+    "id": 49,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Media Queue Agent",
+    "purpose": "Coordinates asynchronous processing without losing the customer turn.",
+    "activation": "On demand"
+  },
+  {
+    "id": 50,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Media Type Triage Agent",
+    "purpose": "Determines whether an attachment is photo, video, audio, or file.",
+    "activation": "On demand"
+  },
+  {
+    "id": 51,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Image Quality Agent",
+    "purpose": "Checks whether visual evidence is sufficient for product matching.",
+    "activation": "On demand"
+  },
+  {
+    "id": 52,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "OCR Agent",
+    "purpose": "Extracts model codes, labels, quantities, and text from images.",
+    "activation": "On demand"
+  },
+  {
+    "id": 53,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Product Visual Matcher",
+    "purpose": "Matches customer media to catalog candidates with confidence.",
+    "activation": "On demand"
+  },
+  {
+    "id": 54,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Video Keyframe Agent",
+    "purpose": "Extracts representative frames from reels and videos.",
+    "activation": "On demand"
+  },
+  {
+    "id": 55,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Multi-Image Ordering Agent",
+    "purpose": "Preserves the customer’s sequence when comparing several images.",
+    "activation": "On demand"
+  },
+  {
+    "id": 56,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Audio Transcription Agent",
+    "purpose": "Transcribes voice messages with language-aware confidence.",
+    "activation": "On demand"
+  },
+  {
+    "id": 57,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Voice Intent Agent",
+    "purpose": "Extracts sales intent, products, quantities, and urgency from audio.",
+    "activation": "On demand"
+  },
+  {
+    "id": 58,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "File Attachment Agent",
+    "purpose": "Reads supported catalogs, order sheets, and documents safely.",
+    "activation": "On demand"
+  },
+  {
+    "id": 59,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Media Duplicate Agent",
+    "purpose": "Prevents repeated processing of the same attachment.",
+    "activation": "On demand"
+  },
+  {
+    "id": 60,
+    "squad": "Media Intelligence",
+    "wave": "Wave 1",
+    "agent": "Media Confidence & Escalation Agent",
+    "purpose": "Asks for better evidence or escalates uncertain matches.",
+    "activation": "On demand"
+  },
+  {
+    "id": 61,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Catalog Retrieval Agent",
+    "purpose": "Retrieves only current approved catalog records.",
+    "activation": "On demand"
+  },
+  {
+    "id": 62,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Product Code Resolver",
+    "purpose": "Maps model and article codes to canonical product records.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 63,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Model Variant Resolver",
+    "purpose": "Distinguishes closely related models and revisions.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 64,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Size Truth Agent",
+    "purpose": "Returns verified sizes and pack composition.",
+    "activation": "On demand"
+  },
+  {
+    "id": 65,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Color Truth Agent",
+    "purpose": "Returns verified available colors and combinations.",
+    "activation": "On demand"
+  },
+  {
+    "id": 66,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Fabric & Composition Agent",
+    "purpose": "Answers material and composition questions from approved data.",
+    "activation": "On demand"
+  },
+  {
+    "id": 67,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Unit Price Truth Agent",
+    "purpose": "Returns the current verified unit price and price basis.",
+    "activation": "On demand"
+  },
+  {
+    "id": 68,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Availability & Stock Agent",
+    "purpose": "Checks sellable stock or clearly marks verification required.",
+    "activation": "On demand"
+  },
+  {
+    "id": 69,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "New Arrival Agent",
+    "purpose": "Identifies current new products without using obsolete catalog entries.",
+    "activation": "On demand"
+  },
+  {
+    "id": 70,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Catalog Version Agent",
+    "purpose": "Prevents mixing facts from different catalog versions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 71,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "Product Alternative Agent",
+    "purpose": "Suggests valid alternatives when the requested item is unavailable.",
+    "activation": "On demand"
+  },
+  {
+    "id": 72,
+    "squad": "Catalog & Product Truth",
+    "wave": "Wave 1",
+    "agent": "No-Match Agent",
+    "purpose": "Handles unknown products without hallucinating a code or price.",
+    "activation": "On demand"
+  },
+  {
+    "id": 73,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Quote Orchestrator",
+    "purpose": "Coordinates configuration, pricing, validation, and presentation.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 74,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Quantity Parser",
+    "purpose": "Normalizes bags, pieces, models, sizes, and mixed quantities.",
+    "activation": "On demand"
+  },
+  {
+    "id": 75,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Wholesale Minimum Agent",
+    "purpose": "Applies verified model-level and order-level minimums.",
+    "activation": "On demand"
+  },
+  {
+    "id": 76,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Line-Item Calculator",
+    "purpose": "Calculates quantity times verified price per line.",
+    "activation": "On demand"
+  },
+  {
+    "id": 77,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Multi-Model Cart Agent",
+    "purpose": "Maintains a quote covering several models and variants.",
+    "activation": "On demand"
+  },
+  {
+    "id": 78,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Currency Normalizer",
+    "purpose": "Preserves source currency and converts only under approved rules.",
+    "activation": "On demand"
+  },
+  {
+    "id": 79,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Discount Eligibility Agent",
+    "purpose": "Checks whether a customer or order qualifies for a discount.",
+    "activation": "On demand"
+  },
+  {
+    "id": 80,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Promotion Rules Agent",
+    "purpose": "Applies active promotions without stacking invalid offers.",
+    "activation": "On demand"
+  },
+  {
+    "id": 81,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Margin Guard Agent",
+    "purpose": "Blocks quotes that violate commercial margin floors.",
+    "activation": "On demand"
+  },
+  {
+    "id": 82,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Quote Validator",
+    "purpose": "Recalculates totals, minimums, sizes, and price basis independently.",
+    "activation": "On demand"
+  },
+  {
+    "id": 83,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Quote Versioning Agent",
+    "purpose": "Tracks revisions and prevents stale quotes from becoming orders.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 84,
+    "squad": "Pricing, CPQ & Quotes",
+    "wave": "Wave 2",
+    "agent": "Quote Presentation Agent",
+    "purpose": "Explains exact line items and assumptions in the customer’s language.",
+    "activation": "On demand"
+  },
+  {
+    "id": 85,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Lead Capture Agent",
+    "purpose": "Creates a lead from qualified customer interest.",
+    "activation": "On demand"
+  },
+  {
+    "id": 86,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Name Extraction Agent",
+    "purpose": "Extracts and validates the customer’s preferred name.",
+    "activation": "On demand"
+  },
+  {
+    "id": 87,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Phone Validation Agent",
+    "purpose": "Normalizes phone numbers and avoids requesting them twice.",
+    "activation": "On demand"
+  },
+  {
+    "id": 88,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Country & City Agent",
+    "purpose": "Captures location for routing, delivery, and localization.",
+    "activation": "On demand"
+  },
+  {
+    "id": 89,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Business Type Agent",
+    "purpose": "Identifies retailer, wholesaler, distributor, or end consumer.",
+    "activation": "On demand"
+  },
+  {
+    "id": 90,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Customer Segment Agent",
+    "purpose": "Assigns a useful sales segment from verified evidence.",
+    "activation": "On demand"
+  },
+  {
+    "id": 91,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Need Discovery Agent",
+    "purpose": "Finds products, use case, market, and buying criteria.",
+    "activation": "On demand"
+  },
+  {
+    "id": 92,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Purchase Intent Agent",
+    "purpose": "Separates curiosity from active buying behavior.",
+    "activation": "On demand"
+  },
+  {
+    "id": 93,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Budget Agent",
+    "purpose": "Captures budget range without creating unnecessary friction.",
+    "activation": "On demand"
+  },
+  {
+    "id": 94,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Timeline Agent",
+    "purpose": "Determines expected purchase timing and urgency.",
+    "activation": "On demand"
+  },
+  {
+    "id": 95,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Decision-Maker Agent",
+    "purpose": "Identifies decision authority and additional stakeholders.",
+    "activation": "On demand"
+  },
+  {
+    "id": 96,
+    "squad": "Lead Discovery & Qualification",
+    "wave": "Wave 2",
+    "agent": "Lead Score Agent",
+    "purpose": "Scores fit and behavior using transparent, calibrated features.",
+    "activation": "On demand"
+  },
+  {
+    "id": 97,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Lead Deduplication Agent",
+    "purpose": "Prevents duplicate lead and opportunity records.",
+    "activation": "On demand"
+  },
+  {
+    "id": 98,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Lead Stage Agent",
+    "purpose": "Assigns a stage from explicit, testable definitions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 99,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Opportunity Creation Agent",
+    "purpose": "Creates an opportunity only when qualification criteria are met.",
+    "activation": "On demand"
+  },
+  {
+    "id": 100,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Pipeline Movement Agent",
+    "purpose": "Advances or reverses stages based on real events.",
+    "activation": "On demand"
+  },
+  {
+    "id": 101,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Owner Assignment Agent",
+    "purpose": "Routes leads using territory, language, workload, and expertise.",
+    "activation": "On demand"
+  },
+  {
+    "id": 102,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Territory Routing Agent",
+    "purpose": "Maps geography and market to the correct commercial owner.",
+    "activation": "On demand"
+  },
+  {
+    "id": 103,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Priority Queue Agent",
+    "purpose": "Ranks human work by intent, value, urgency, and SLA.",
+    "activation": "On demand"
+  },
+  {
+    "id": 104,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Manager Brief Agent",
+    "purpose": "Summarizes history, need, products, risks, and next action.",
+    "activation": "On demand"
+  },
+  {
+    "id": 105,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "CRM Sync Agent",
+    "purpose": "Synchronizes approved fields with the CRM idempotently.",
+    "activation": "On demand"
+  },
+  {
+    "id": 106,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Activity Logging Agent",
+    "purpose": "Records meaningful customer and agent events.",
+    "activation": "On demand"
+  },
+  {
+    "id": 107,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Next-Best-Action Agent",
+    "purpose": "Recommends the most useful next sales step.",
+    "activation": "On demand"
+  },
+  {
+    "id": 108,
+    "squad": "CRM & Pipeline",
+    "wave": "Wave 2",
+    "agent": "Won & Lost Reason Agent",
+    "purpose": "Captures structured outcome reasons for learning.",
+    "activation": "On demand"
+  },
+  {
+    "id": 109,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Objection Classifier",
+    "purpose": "Identifies the real barrier behind the customer’s response.",
+    "activation": "On demand"
+  },
+  {
+    "id": 110,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Price Objection Agent",
+    "purpose": "Explains value without inventing a discount.",
+    "activation": "On demand"
+  },
+  {
+    "id": 111,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "MOQ Objection Agent",
+    "purpose": "Handles minimum-order concerns with valid options.",
+    "activation": "On demand"
+  },
+  {
+    "id": 112,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Trust & Quality Agent",
+    "purpose": "Uses approved proof points for quality and reliability.",
+    "activation": "On demand"
+  },
+  {
+    "id": 113,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Delivery Objection Agent",
+    "purpose": "Addresses timing, method, risk, and geography accurately.",
+    "activation": "On demand"
+  },
+  {
+    "id": 114,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Availability Objection Agent",
+    "purpose": "Offers verified substitutions or a human stock check.",
+    "activation": "On demand"
+  },
+  {
+    "id": 115,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Competitor Comparison Agent",
+    "purpose": "Compares only supportable characteristics and avoids attacks.",
+    "activation": "On demand"
+  },
+  {
+    "id": 116,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Value Proposition Agent",
+    "purpose": "Tailors benefits to the buyer’s market and use case.",
+    "activation": "On demand"
+  },
+  {
+    "id": 117,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Negotiation Boundary Agent",
+    "purpose": "Enforces price, payment, and term limits.",
+    "activation": "On demand"
+  },
+  {
+    "id": 118,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Discount Counteroffer Agent",
+    "purpose": "Proposes approved trade-offs such as quantity or mix.",
+    "activation": "On demand"
+  },
+  {
+    "id": 119,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Silence & Uncertainty Agent",
+    "purpose": "Responds helpfully when the customer is hesitant or vague.",
+    "activation": "On demand"
+  },
+  {
+    "id": 120,
+    "squad": "Objections, Persuasion & Negotiation",
+    "wave": "Wave 3",
+    "agent": "Close Readiness Agent",
+    "purpose": "Detects buying signals and moves naturally to the next commitment.",
+    "activation": "On demand"
+  },
+  {
+    "id": 121,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Order Capture Agent",
+    "purpose": "Transforms an accepted quote into a structured order draft.",
+    "activation": "On demand"
+  },
+  {
+    "id": 122,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Cart Validation Agent",
+    "purpose": "Verifies model, variant, size, quantity, and totals.",
+    "activation": "On demand"
+  },
+  {
+    "id": 123,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Customer Details Agent",
+    "purpose": "Collects only required billing and contact details.",
+    "activation": "On demand"
+  },
+  {
+    "id": 124,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Shipping Details Agent",
+    "purpose": "Validates delivery name, address, country, and contact.",
+    "activation": "On demand"
+  },
+  {
+    "id": 125,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Order Confirmation Agent",
+    "purpose": "Shows a final summary and asks for explicit confirmation.",
+    "activation": "On demand"
+  },
+  {
+    "id": 126,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Payment Method Agent",
+    "purpose": "Offers only currently supported payment methods.",
+    "activation": "On demand"
+  },
+  {
+    "id": 127,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Payment Instruction Guard",
+    "purpose": "Prevents unapproved or unsafe payment instructions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 128,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Payment Proof Agent",
+    "purpose": "Routes proof of payment for verification without declaring success early.",
+    "activation": "On demand"
+  },
+  {
+    "id": 129,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Contract & Invoice Agent",
+    "purpose": "Prepares or requests approved commercial documents.",
+    "activation": "On demand"
+  },
+  {
+    "id": 130,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Approval Routing Agent",
+    "purpose": "Obtains human approval for exceptional prices or terms.",
+    "activation": "On demand"
+  },
+  {
+    "id": 131,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Order Submission Agent",
+    "purpose": "Creates the backend order idempotently after confirmation.",
+    "activation": "On demand"
+  },
+  {
+    "id": 132,
+    "squad": "Order Capture, Checkout & Payment",
+    "wave": "Wave 2",
+    "agent": "Order Change & Cancel Agent",
+    "purpose": "Handles amendments and cancellations under current policy.",
+    "activation": "On demand"
+  },
+  {
+    "id": 133,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Delivery Country Eligibility Agent",
+    "purpose": "Checks whether and how the destination can be served.",
+    "activation": "On demand"
+  },
+  {
+    "id": 134,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Delivery Method Agent",
+    "purpose": "Selects approved shipping methods for the destination and order.",
+    "activation": "On demand"
+  },
+  {
+    "id": 135,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Cargo & Post Agent",
+    "purpose": "Explains cargo and postal options from verified rules.",
+    "activation": "On demand"
+  },
+  {
+    "id": 136,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Shipping Estimate Agent",
+    "purpose": "Provides verified estimates with assumptions and validity window.",
+    "activation": "On demand"
+  },
+  {
+    "id": 137,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Warehouse Confirmation Agent",
+    "purpose": "Confirms reservable stock before promising fulfillment.",
+    "activation": "On demand"
+  },
+  {
+    "id": 138,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Picking & Packing Agent",
+    "purpose": "Tracks preparation and package composition.",
+    "activation": "On demand"
+  },
+  {
+    "id": 139,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Shipment Booking Agent",
+    "purpose": "Creates a shipment request with validated order data.",
+    "activation": "On demand"
+  },
+  {
+    "id": 140,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Tracking Agent",
+    "purpose": "Retrieves and explains shipment status.",
+    "activation": "On demand"
+  },
+  {
+    "id": 141,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Delay & Exception Agent",
+    "purpose": "Detects delays and coordinates customer communication.",
+    "activation": "On demand"
+  },
+  {
+    "id": 142,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Delivery Confirmation Agent",
+    "purpose": "Confirms receipt and closes fulfillment state.",
+    "activation": "On demand"
+  },
+  {
+    "id": 143,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "Return & Exchange Agent",
+    "purpose": "Applies current eligibility and evidence requirements.",
+    "activation": "On demand"
+  },
+  {
+    "id": 144,
+    "squad": "Logistics, Fulfillment & After-Sales",
+    "wave": "Wave 3",
+    "agent": "After-Sales Support Agent",
+    "purpose": "Handles post-delivery questions and service recovery.",
+    "activation": "On demand"
+  },
+  {
+    "id": 145,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Human Request Agent",
+    "purpose": "Recognizes explicit and implicit requests for a person.",
+    "activation": "On demand"
+  },
+  {
+    "id": 146,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Call Scheduler",
+    "purpose": "Collects timezone and availability for a callback.",
+    "activation": "On demand"
+  },
+  {
+    "id": 147,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Video Call Scheduler",
+    "purpose": "Coordinates requested video calls with the sales team.",
+    "activation": "On demand"
+  },
+  {
+    "id": 148,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Callback Queue Agent",
+    "purpose": "Creates and prioritizes callback work.",
+    "activation": "On demand"
+  },
+  {
+    "id": 149,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Manager Availability Agent",
+    "purpose": "Checks the right manager’s working availability.",
+    "activation": "On demand"
+  },
+  {
+    "id": 150,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Handoff Packet Agent",
+    "purpose": "Sends a concise, complete context package to the manager.",
+    "activation": "On demand"
+  },
+  {
+    "id": 151,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Handoff Confirmation Agent",
+    "purpose": "Tells the customer what will happen next without ending the chat.",
+    "activation": "On demand"
+  },
+  {
+    "id": 152,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Escalation Priority Agent",
+    "purpose": "Sets urgency from value, frustration, risk, and SLA.",
+    "activation": "On demand"
+  },
+  {
+    "id": 153,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Complaint Escalation Agent",
+    "purpose": "Routes sensitive complaints with evidence and ownership.",
+    "activation": "On demand"
+  },
+  {
+    "id": 154,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Employment & HR Router",
+    "purpose": "Separates job seekers from sales leads.",
+    "activation": "On demand"
+  },
+  {
+    "id": 155,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Resume Intake Agent",
+    "purpose": "Collects and routes candidate material under HR policy.",
+    "activation": "On demand"
+  },
+  {
+    "id": 156,
+    "squad": "Human Handoff & Workforce",
+    "wave": "Wave 2",
+    "agent": "Human SLA Agent",
+    "purpose": "Monitors acknowledgment, acceptance, and response deadlines.",
+    "activation": "On demand"
+  },
+  {
+    "id": 157,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Follow-Up Planner",
+    "purpose": "Chooses purpose, timing, channel, and stop condition.",
+    "activation": "On demand"
+  },
+  {
+    "id": 158,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "No-Response Reminder Agent",
+    "purpose": "Sends a limited helpful reminder after inactivity.",
+    "activation": "On demand"
+  },
+  {
+    "id": 159,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Quote Follow-Up Agent",
+    "purpose": "Reopens a quote with validity, changes, and next action.",
+    "activation": "On demand"
+  },
+  {
+    "id": 160,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Cart Recovery Agent",
+    "purpose": "Recovers incomplete orders without pressure or repetition.",
+    "activation": "On demand"
+  },
+  {
+    "id": 161,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Catalog Follow-Up Agent",
+    "purpose": "Checks whether a sent catalog led to product interest.",
+    "activation": "On demand"
+  },
+  {
+    "id": 162,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "New Arrival Nurture Agent",
+    "purpose": "Matches new products to opted-in customer interests.",
+    "activation": "On demand"
+  },
+  {
+    "id": 163,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Hot Lead Nurture Agent",
+    "purpose": "Maintains momentum for qualified, high-intent leads.",
+    "activation": "On demand"
+  },
+  {
+    "id": 164,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Cold Lead Reactivation Agent",
+    "purpose": "Tests interest after an appropriate cooling period.",
+    "activation": "On demand"
+  },
+  {
+    "id": 165,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Repeat Buyer Agent",
+    "purpose": "Uses past purchases to support fast reordering.",
+    "activation": "On demand"
+  },
+  {
+    "id": 166,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Cross-Sell Agent",
+    "purpose": "Suggests complementary products when relevant.",
+    "activation": "On demand"
+  },
+  {
+    "id": 167,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Upsell Agent",
+    "purpose": "Offers a higher-value option only when it improves fit.",
+    "activation": "On demand"
+  },
+  {
+    "id": 168,
+    "squad": "Follow-Up, Retention & Reactivation",
+    "wave": "Wave 3",
+    "agent": "Opt-Out & Frequency Agent",
+    "purpose": "Enforces consent, frequency caps, and suppression.",
+    "activation": "On demand"
+  },
+  {
+    "id": 169,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Learning Curator",
+    "purpose": "Selects safe, high-value interactions for learning.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 170,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Human Example Deduplicator",
+    "purpose": "Collapses repeated examples before they influence behavior.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 171,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Conflicting Example Resolver",
+    "purpose": "Quarantines examples with incompatible correct answers.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 172,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Obsolete Rule Detector",
+    "purpose": "Finds learning examples that contradict current truth.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 173,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Knowledge Ingestion Agent",
+    "purpose": "Converts approved documents and data into governed knowledge.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 174,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Knowledge Versioning Agent",
+    "purpose": "Tracks what changed, when, and who approved it.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 175,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Source Freshness Agent",
+    "purpose": "Expires time-sensitive price, stock, delivery, and promotion facts.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 176,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Prompt Registry Agent",
+    "purpose": "Maintains prompt ownership, version, status, and dependencies.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 177,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Prompt Experiment Agent",
+    "purpose": "Runs bounded prompt tests against approved evaluation sets.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 178,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Correction Miner",
+    "purpose": "Extracts structured failure lessons from manager corrections.",
+    "activation": "On demand"
+  },
+  {
+    "id": 179,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "FAQ Gap Agent",
+    "purpose": "Finds common customer requests lacking a reliable answer.",
+    "activation": "On demand"
+  },
+  {
+    "id": 180,
+    "squad": "Learning & Knowledge Governance",
+    "wave": "Wave 4",
+    "agent": "Feedback Incorporation Agent",
+    "purpose": "Promotes validated improvements through review gates.",
+    "activation": "On demand"
+  },
+  {
+    "id": 181,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Response QA Agent",
+    "purpose": "Checks the complete proposed reply before it is sent.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 182,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Factual Grounding Agent",
+    "purpose": "Requires claims to resolve to approved sources or explicit uncertainty.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 183,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Calculation QA Agent",
+    "purpose": "Independently verifies quantities, prices, totals, and conversions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 184,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Language QA Agent",
+    "purpose": "Checks language continuity, grammar, and preserved commercial meaning.",
+    "activation": "On demand"
+  },
+  {
+    "id": 185,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Tone & Brand QA Agent",
+    "purpose": "Keeps replies concise, professional, helpful, and on-brand.",
+    "activation": "On demand"
+  },
+  {
+    "id": 186,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Completeness Agent",
+    "purpose": "Ensures every customer question is answered or acknowledged.",
+    "activation": "On demand"
+  },
+  {
+    "id": 187,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Repetition & Spam Agent",
+    "purpose": "Prevents duplicate prompts, repeated phone requests, and loops.",
+    "activation": "Core fast path"
+  },
+  {
+    "id": 188,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "PII & Privacy Agent",
+    "purpose": "Minimizes and protects personal data across replies and tools.",
+    "activation": "On demand"
+  },
+  {
+    "id": 189,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Prompt Injection Agent",
+    "purpose": "Detects attempts to override instructions through user or file content.",
+    "activation": "On demand"
+  },
+  {
+    "id": 190,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Tool Call Guard",
+    "purpose": "Validates tool inputs, scope, permissions, and side effects.",
+    "activation": "On demand"
+  },
+  {
+    "id": 191,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Policy & Compliance Agent",
+    "purpose": "Applies current commercial, platform, and legal rules.",
+    "activation": "On demand"
+  },
+  {
+    "id": 192,
+    "squad": "Quality, Safety, Compliance & Security",
+    "wave": "Wave 1",
+    "agent": "Human Approval Gate",
+    "purpose": "Blocks high-risk actions until an authorized person approves.",
+    "activation": "On demand"
+  },
+  {
+    "id": 193,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Sales Analytics Agent",
+    "purpose": "Produces governed sales performance measures.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 194,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Funnel Agent",
+    "purpose": "Measures stage progression and conversion using stable definitions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 195,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Conversion Attribution Agent",
+    "purpose": "Connects outcomes to channels, campaigns, and interventions.",
+    "activation": "On demand"
+  },
+  {
+    "id": 196,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Intent Trend Agent",
+    "purpose": "Tracks changing customer demand and request patterns.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 197,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Agent Performance Agent",
+    "purpose": "Measures accuracy, helpfulness, cost, latency, and escalation.",
+    "activation": "On demand"
+  },
+  {
+    "id": 198,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Response Latency Agent",
+    "purpose": "Monitors response distributions and operational breaches.",
+    "activation": "On demand"
+  },
+  {
+    "id": 199,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Failure Root-Cause Agent",
+    "purpose": "Clusters errors by system cause rather than surface wording.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 200,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Lead Quality Agent",
+    "purpose": "Audits score calibration and downstream value.",
+    "activation": "On demand"
+  },
+  {
+    "id": 201,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Forecasting Agent",
+    "purpose": "Forecasts qualified pipeline and orders with uncertainty.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 202,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Revenue Opportunity Agent",
+    "purpose": "Finds reachable revenue opportunities from governed evidence.",
+    "activation": "On demand"
+  },
+  {
+    "id": 203,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Sales Coaching Agent",
+    "purpose": "Turns reviewed conversations into specific manager coaching.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 204,
+    "squad": "Analytics, Forecasting & Coaching",
+    "wave": "Wave 4",
+    "agent": "Experiment Evaluation Agent",
+    "purpose": "Measures controlled changes against success and guardrail metrics.",
+    "activation": "Async or scheduled"
+  },
+  {
+    "id": 205,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "SLA & Recovery Agent",
+    "purpose": "Detects stalled work and invokes a safe recovery path.",
+    "activation": "On demand"
+  },
+  {
+    "id": 206,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Retry & Backoff Agent",
+    "purpose": "Retries transient failures without creating message storms.",
+    "activation": "On demand"
+  },
+  {
+    "id": 207,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Idempotency Agent",
+    "purpose": "Prevents duplicate messages, leads, quotes, and orders.",
+    "activation": "On demand"
+  },
+  {
+    "id": 208,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Message Ordering Agent",
+    "purpose": "Preserves conversational order across concurrent events.",
+    "activation": "On demand"
+  },
+  {
+    "id": 209,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Webhook Health Agent",
+    "purpose": "Monitors channel webhook delivery and signature validation.",
+    "activation": "On demand"
+  },
+  {
+    "id": 210,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Queue Load-Balancing Agent",
+    "purpose": "Controls priority and capacity across workloads.",
+    "activation": "On demand"
+  },
+  {
+    "id": 211,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Cost & Token Agent",
+    "purpose": "Tracks spend and enforces per-route budgets.",
+    "activation": "On demand"
+  },
+  {
+    "id": 212,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Model Routing Agent",
+    "purpose": "Selects deterministic code, small models, or frontier models by risk.",
+    "activation": "On demand"
+  },
+  {
+    "id": 213,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Observability & Tracing Agent",
+    "purpose": "Creates end-to-end traces for every customer turn.",
+    "activation": "On demand"
+  },
+  {
+    "id": 214,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Integration Gateway Agent",
+    "purpose": "Standardizes CRM, catalog, order, messaging, and MCP connections.",
+    "activation": "On demand"
+  },
+  {
+    "id": 215,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Data Quality Agent",
+    "purpose": "Checks completeness, validity, consistency, freshness, and uniqueness.",
+    "activation": "On demand"
+  },
+  {
+    "id": 216,
+    "squad": "Platform, Reliability & Integrations",
+    "wave": "Wave 4",
+    "agent": "Disaster Recovery Agent",
+    "purpose": "Supports rollback, replay, backup verification, and continuity.",
+    "activation": "On demand"
+  }
+]

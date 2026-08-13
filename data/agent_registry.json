@@ -148,5 +148,15 @@
     "activation": "Async or scheduled",
     "status": "Live",
     "surface": "Dashboard"
+  },
+  {
+    "id": 16,
+    "squad": "Follow-Up & Retention",
+    "wave": "New addition",
+    "agent": "Catalog Follow-Up Agent",
+    "purpose": "Schedules one helpful follow-up five minutes after catalog delivery when the customer has not replied, and cancels on any reply, handoff, opt-out, or order activity.",
+    "activation": "Scheduled +5m",
+    "status": "New",
+    "surface": "Dashboard"
   }
 ]

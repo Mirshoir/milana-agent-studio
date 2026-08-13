@@ -16,7 +16,7 @@ test("server-renders Milana Agent Studio", async () => {
   const html = await response.text();
   assert.match(html, /<title>Milana Agent Studio<\/title>/i);
   assert.match(html, /Control room/);
-  assert.match(html, /15 existing agents indexed/);
+  assert.match(html, /16 agents indexed/);
   assert.match(html, /Current Kotiba architecture/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });

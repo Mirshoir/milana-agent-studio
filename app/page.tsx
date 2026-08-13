@@ -168,7 +168,7 @@ function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgen
 
 type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
 type FlowEdge = { id:string; from:string; to:string };
-type FlowTestResult = { runId:string; input:string; output:string; latency:number; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
+type FlowTestResult = { runId:string; input:string; output:string; latency:number; attachment:{name:string;format:string;size:string}; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
 
 const initialFlowNodes: FlowNode[] = [
   { id:"trigger_1", type:"trigger", label:"Instagram inbound", subtitle:"Message or media event", x:44, y:170 },
@@ -176,12 +176,13 @@ const initialFlowNodes: FlowNode[] = [
   { id:"agent_2", type:"agent", label:"Intent Agent", subtitle:"Agent 002 · Core fast path", x:458, y:60, agentId:2 },
   { id:"agent_3", type:"agent", label:"Customer Memory Agent", subtitle:"Agent 006 · Core fast path", x:458, y:280, agentId:6 },
   { id:"agent_4", type:"agent", label:"Reasoning Agent", subtitle:"Agent 008 · Core fast path", x:650, y:170, agentId:8 },
-  { id:"agent_5", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · On demand", x:842, y:60, agentId:10 },
-  { id:"agent_6", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Async or scheduled", x:842, y:280, agentId:11 },
+  { id:"agent_5", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · On demand", x:842, y:22, agentId:10 },
+  { id:"tool_catalog", type:"tool", label:"Catalog Delivery", subtitle:"Attach the current approved catalog", x:842, y:170 },
+  { id:"agent_6", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Async or scheduled", x:842, y:318, agentId:11 },
   { id:"output_1", type:"output", label:"Reply or manager handoff", subtitle:"Instagram DM / Kotiba manager", x:1034, y:170 },
 ];
 const initialFlowEdges: FlowEdge[] = [
-  {id:"e1",from:"trigger_1",to:"agent_1"},{id:"e2",from:"agent_1",to:"agent_2"},{id:"e3",from:"agent_1",to:"agent_3"},{id:"e4",from:"agent_2",to:"agent_4"},{id:"e5",from:"agent_3",to:"agent_4"},{id:"e6",from:"agent_4",to:"agent_5"},{id:"e7",from:"agent_4",to:"agent_6"},{id:"e8",from:"agent_5",to:"output_1"},{id:"e9",from:"agent_6",to:"output_1"},
+  {id:"e1",from:"trigger_1",to:"agent_1"},{id:"e2",from:"agent_1",to:"agent_2"},{id:"e3",from:"agent_1",to:"agent_3"},{id:"e4",from:"agent_2",to:"agent_4"},{id:"e5",from:"agent_3",to:"agent_4"},{id:"e6",from:"agent_4",to:"agent_5"},{id:"e7",from:"agent_4",to:"tool_catalog"},{id:"e8",from:"agent_4",to:"agent_6"},{id:"e9",from:"agent_5",to:"output_1"},{id:"e10",from:"tool_catalog",to:"output_1"},{id:"e11",from:"agent_6",to:"output_1"},
 ];
 const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
   {type:"trigger",label:"Trigger",mark:"⚡"},{type:"agent",label:"Agent",mark:"A"},{type:"router",label:"Router",mark:"◇"},{type:"knowledge",label:"Knowledge",mark:"K"},{type:"condition",label:"Condition",mark:"?"},{type:"guardrail",label:"Guardrail",mark:"✓"},{type:"tool",label:"Tool",mark:"T"},{type:"output",label:"Output",mark:"→"},
@@ -227,15 +228,16 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     setRunning(true);
     setTestResult(null);
     window.setTimeout(()=>{
-      const path=nodes.filter((node)=>node.type==="agent").map((node)=>({
+      const path=nodes.filter((node)=>node.type==="agent"||node.id==="tool_catalog").map((node)=>({
         label:node.label,
-        detail:node.agentId===1?"Selected the sales response path":node.agentId===2?"Detected Uzbek product-interest intent":node.agentId===6?"Loaded language and customer context":node.agentId===8?"Chose catalog clarification as the next action":node.agentId===10?"No manager handoff required":node.agentId===11?"Recorded the simulated decision trace":"Completed its assigned workflow step",
+        detail:node.agentId===1?"Selected the catalog-delivery sales path":node.agentId===2?"Detected an Uzbek catalog request":node.agentId===6?"Loaded language and customer context":node.agentId===8?"Chose immediate catalog delivery":node.id==="tool_catalog"?"Attached the current approved Milana Premium catalog":node.agentId===10?"No manager handoff required":node.agentId===11?"Recorded the simulated decision and attachment":"Completed its assigned workflow step",
         status:(node.agentId===10?"skipped":"passed") as "passed"|"skipped",
       }));
       setTestResult({
         runId:`SIM-${Date.now().toString().slice(-6)}`,
         input:"Salom, yangi katalogni yubora olasizmi?",
-        output:"Assalomu alaykum! Albatta, yangi katalogimizni yuboraman. Sizni ko‘proq qaysi turdagi modellar qiziqtiradi? Shunga mos variantlarni ham ajratib ko‘rsataman.",
+        output:"Assalomu alaykum! Albatta — yangi katalogimizni ilova qildim. Sizga yoqqan modelning rasmi yoki artikulini yuboring, narxi va buyurtma shartlarini tekshirib beraman.",
+        attachment:{name:"Milana Premium — Latest Catalog.pdf",format:"PDF catalog",size:"Simulation attachment"},
         latency:1840,
         path,
       });
@@ -259,9 +261,9 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     </div>
     {(running||testResult)&&<section id="flow-test-output" className={`flow-test-output ${running?"is-running":""}`} aria-live="polite">
       {running?<div className="run-progress"><span className="run-spinner"/><div><p className="eyebrow">TEST RUN IN PROGRESS</p><h3>Executing the current workflow…</h3><p>Tracing every agent decision. No live Instagram message will be sent.</p></div></div>:testResult&&<>
-        <header className="run-result-head"><div><span className="run-status">✓ Passed</span><h3>Simulation output</h3><p>Review the customer reply and every agent decision before release.</p></div><div className="run-meta"><span><small>Run</small><strong>{testResult.runId}</strong></span><span><small>Latency</small><strong>{(testResult.latency/1000).toFixed(2)}s</strong></span><span><small>Agents</small><strong>{testResult.path.length}</strong></span><span><small>Live sends</small><strong>0</strong></span></div></header>
+        <header className="run-result-head"><div><span className="run-status">✓ Passed</span><h3>Simulation output</h3><p>Review the customer reply, catalog attachment, and every workflow decision before release.</p></div><div className="run-meta"><span><small>Run</small><strong>{testResult.runId}</strong></span><span><small>Latency</small><strong>{(testResult.latency/1000).toFixed(2)}s</strong></span><span><small>Steps</small><strong>{testResult.path.length}</strong></span><span><small>Live sends</small><strong>0</strong></span></div></header>
         <div className="run-result-grid">
-          <div className="run-conversation"><p className="eyebrow">CONVERSATION PREVIEW</p><div className="test-message customer"><span>Customer</span><p>{testResult.input}</p></div><div className="test-message agent"><span>Milana AI</span><p>{testResult.output}</p><button onClick={()=>{navigator.clipboard?.writeText(testResult.output);notify("Output copied")}}>Copy output</button></div><div className="simulation-note">Simulation only · Nothing was sent to Instagram</div></div>
+          <div className="run-conversation"><p className="eyebrow">CONVERSATION PREVIEW</p><div className="test-message customer"><span>Customer</span><p>{testResult.input}</p></div><div className="test-message agent"><span>Milana AI</span><p>{testResult.output}</p><div className="catalog-attachment"><i>PDF</i><div><strong>{testResult.attachment.name}</strong><span>{testResult.attachment.format} · {testResult.attachment.size}</span></div><b>Attached ✓</b></div><button onClick={()=>{navigator.clipboard?.writeText(testResult.output);notify("Output copied")}}>Copy output</button></div><div className="simulation-note">Simulation only · The catalog card is included in the output, but nothing was sent to Instagram</div></div>
           <div className="run-trace"><p className="eyebrow">EXECUTION TRACE</p>{testResult.path.map((step,index)=><div className={`trace-step ${step.status}`} key={`${step.label}-${index}`}><i>{step.status==="passed"?"✓":"–"}</i><div><strong>{step.label}</strong><span>{step.detail}</span></div><small>{step.status}</small></div>)}</div>
         </div>
       </>}

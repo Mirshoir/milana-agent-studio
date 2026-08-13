@@ -4,8 +4,10 @@ import { ensureStudioSchema } from "@/db/raw";
 import { workflowDefinitions } from "@/db/schema";
 import {
   CURRENT_WORKFLOW_ID,
+  MILANA_WEBSITE_QA_WORKFLOW_ID,
   UNIVERSAL_WORKFLOW_ID,
   currentKotibaWorkflow,
+  milanaWebsiteQaWorkflow,
   universalOmnichannelWorkflow,
 } from "@/data/workflow_templates";
 
@@ -28,6 +30,16 @@ async function ensureDefaultWorkflows() {
       description: universalOmnichannelWorkflow.description,
       nodesJson: JSON.stringify(universalOmnichannelWorkflow.nodes),
       edgesJson: JSON.stringify(universalOmnichannelWorkflow.edges),
+      status: "draft",
+      version: 1,
+      updatedAt: now,
+    },
+    {
+      id: MILANA_WEBSITE_QA_WORKFLOW_ID,
+      name: milanaWebsiteQaWorkflow.name,
+      description: milanaWebsiteQaWorkflow.description,
+      nodesJson: JSON.stringify(milanaWebsiteQaWorkflow.nodes),
+      edgesJson: JSON.stringify(milanaWebsiteQaWorkflow.edges),
       status: "draft",
       version: 1,
       updatedAt: now,

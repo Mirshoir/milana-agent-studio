@@ -19,6 +19,7 @@ export type WorkflowTemplate = {
 
 export const CURRENT_WORKFLOW_ID = "flow_current_kotiba_instagram_v1";
 export const UNIVERSAL_WORKFLOW_ID = "flow_universal_omnichannel_v1";
+export const MILANA_WEBSITE_QA_WORKFLOW_ID = "flow_milanapremium_website_qa_v1";
 
 export const currentKotibaWorkflow: WorkflowTemplate = {
   name: "Current Kotiba Instagram sales path",
@@ -78,6 +79,43 @@ export const universalOmnichannelWorkflow: WorkflowTemplate = {
   ],
 };
 
+export const milanaWebsiteQaWorkflow: WorkflowTemplate = {
+  name: "MilanaPremium.uz Customer Q&A",
+  description: "Isolated draft for the existing website assistant. Grounds every answer in the live SQLite catalog, approved website policies, and authenticated customer data before replying or handing off.",
+  nodes: [
+    { id:"web_trigger", type:"trigger", label:"Website chat inbound", subtitle:"Existing milanapremium.uz AI shopping assistant", x:20, y:185 },
+    { id:"web_history", type:"agent", label:"Conversation History Analyzer", subtitle:"Agent 017 · Review the full available session", x:205, y:55, agentId:17 },
+    { id:"web_intent", type:"agent", label:"Intent Agent", subtitle:"Agent 002 · Detect language and customer job", x:205, y:315, agentId:2 },
+    { id:"web_source_router", type:"router", label:"Website Source Router", subtitle:"Choose catalog, policy, or authenticated customer data", x:400, y:185 },
+    { id:"web_catalog", type:"knowledge", label:"Live Website Catalog", subtitle:"SQLite milana.db · active products only", x:600, y:35 },
+    { id:"web_policy", type:"knowledge", label:"Approved Website Policies", subtitle:"Ordering · support · terms · privacy · partnership", x:600, y:185 },
+    { id:"web_customer_data", type:"guardrail", label:"Authenticated Customer Scope", subtitle:"Account and order data only for the verified owner", x:600, y:335 },
+    { id:"web_integrity", type:"agent", label:"Website Source Integrity Agent", subtitle:"Agent 025 · Enforce source precedence and flag conflicts", x:800, y:185, agentId:25 },
+    { id:"web_orchestrator", type:"agent", label:"Website Service Orchestrator", subtitle:"Agent 018 · Invoke the smallest specialist set", x:995, y:185, agentId:18 },
+    { id:"web_catalog_agent", type:"agent", label:"Product Catalog Retrieval Agent", subtitle:"Agent 019 · Search verified active products", x:1190, y:15, agentId:19 },
+    { id:"web_pack_agent", type:"agent", label:"Stock, Pack & Price Agent", subtitle:"Agent 020 · Product-specific price, MOQ, and availability", x:1190, y:115, agentId:20 },
+    { id:"web_recommend_agent", type:"agent", label:"Product Recommendation Agent", subtitle:"Agent 021 · Rank matching products", x:1190, y:215, agentId:21 },
+    { id:"web_policy_agent", type:"agent", label:"Ordering & Policy Agent", subtitle:"Agent 022 · Approved commercial and policy answers", x:1190, y:315, agentId:22 },
+    { id:"web_support_agent", type:"agent", label:"Account, Order & Support Agent", subtitle:"Agent 023 · Authenticated operations and support", x:1190, y:415, agentId:23 },
+    { id:"web_composer", type:"agent", label:"Multilingual Website Response Agent", subtitle:"Agent 024 · Uzbek, Russian, or English answer", x:1390, y:185, agentId:24 },
+    { id:"web_answer_guard", type:"guardrail", label:"Website Answer Guardrail", subtitle:"No invented stock, timing, payment, discount, or private data", x:1585, y:185 },
+    { id:"web_handoff", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · Escalate manager-only or unresolved cases", x:1780, y:315, agentId:10 },
+    { id:"web_output", type:"output", label:"Website answer", subtitle:"Text · product cards · human handoff", x:1780, y:145 },
+    { id:"web_audit", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Record sources, decisions, and result", x:1970, y:245, agentId:11 },
+  ],
+  edges: [
+    {id:"mw1",from:"web_trigger",to:"web_history"},{id:"mw2",from:"web_trigger",to:"web_intent"},
+    {id:"mw3",from:"web_history",to:"web_source_router"},{id:"mw4",from:"web_intent",to:"web_source_router"},
+    {id:"mw5",from:"web_source_router",to:"web_catalog"},{id:"mw6",from:"web_source_router",to:"web_policy"},{id:"mw7",from:"web_source_router",to:"web_customer_data"},
+    {id:"mw8",from:"web_catalog",to:"web_integrity"},{id:"mw9",from:"web_policy",to:"web_integrity"},{id:"mw10",from:"web_customer_data",to:"web_integrity"},
+    {id:"mw11",from:"web_integrity",to:"web_orchestrator"},
+    {id:"mw12",from:"web_orchestrator",to:"web_catalog_agent"},{id:"mw13",from:"web_orchestrator",to:"web_pack_agent"},{id:"mw14",from:"web_orchestrator",to:"web_recommend_agent"},{id:"mw15",from:"web_orchestrator",to:"web_policy_agent"},{id:"mw16",from:"web_orchestrator",to:"web_support_agent"},
+    {id:"mw17",from:"web_catalog_agent",to:"web_composer"},{id:"mw18",from:"web_pack_agent",to:"web_composer"},{id:"mw19",from:"web_recommend_agent",to:"web_composer"},{id:"mw20",from:"web_policy_agent",to:"web_composer"},{id:"mw21",from:"web_support_agent",to:"web_composer"},
+    {id:"mw22",from:"web_composer",to:"web_answer_guard"},{id:"mw23",from:"web_answer_guard",to:"web_output"},{id:"mw24",from:"web_answer_guard",to:"web_handoff"},
+    {id:"mw25",from:"web_output",to:"web_audit"},{id:"mw26",from:"web_handoff",to:"web_audit"},
+  ],
+};
+
 export const blankWorkflow: WorkflowTemplate = {
   name: "Untitled workflow",
   description: "A new reusable agent workflow.",
@@ -112,5 +150,5 @@ export const websiteQaWorkflow: WorkflowTemplate = {
 export const workflowTemplates = {
   blank: blankWorkflow,
   universal: universalOmnichannelWorkflow,
-  website: websiteQaWorkflow,
+  website: milanaWebsiteQaWorkflow,
 };

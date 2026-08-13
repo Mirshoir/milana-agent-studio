@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import registryData from "@/data/agent_registry.json";
 import {
   CURRENT_WORKFLOW_ID,
+  MILANA_WEBSITE_QA_WORKFLOW_ID,
   UNIVERSAL_WORKFLOW_ID,
+  milanaWebsiteQaWorkflow,
   universalOmnichannelWorkflow,
   workflowTemplates,
   type WorkflowTemplate,
@@ -30,7 +32,10 @@ const sampleMessages = [
 ];
 
 function promptFor(agent: Agent) {
-  return `You are the ${agent.agent} for Milana Premium.\n\nMISSION\n${agent.purpose}\n\nOPERATING RULES\n- Use only verified business, catalog, pricing, delivery, and policy data.\n- Preserve the customer’s language and conversational context.\n- Never invent product codes, prices, stock, sizes, delivery terms, or manager actions.\n- Return a concise structured result to the active Kotiba sales workflow.\n- State uncertainty explicitly and request one targeted clarification when required.\n\nSUCCESS\nThe customer receives an accurate next step without repetition, delay, or unnecessary handoff.`;
+  const destination = agent.wave === "Website Q&A draft"
+    ? "isolated MilanaPremium.uz customer-service workflow"
+    : "active Kotiba sales workflow";
+  return `You are the ${agent.agent} for Milana Premium.\n\nMISSION\n${agent.purpose}\n\nOPERATING RULES\n- Use only verified business, catalog, pricing, delivery, and policy data.\n- Preserve the customer’s language and conversational context.\n- Never invent product codes, prices, stock, sizes, delivery terms, or manager actions.\n- Return a concise structured result to the ${destination}.\n- State uncertainty explicitly and request one targeted clarification when required.\n\nSUCCESS\nThe customer receives an accurate next step without repetition, delay, or unnecessary handoff.`;
 }
 
 function routeFor(agent: Agent) {
@@ -137,7 +142,7 @@ export default function AgentStudio() {
         <nav aria-label="Studio navigation">
           {nav.map((item) => <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => setView(item.id)}><span>{item.mark}</span>{item.label}{item.id === "evaluations" && <em>{data.runs.length}</em>}</button>)}
         </nav>
-        <div className="sidebar-foot"><div className="health-dot"/><div><strong>Kotiba scope active</strong><span>17 agents indexed</span></div></div>
+        <div className="sidebar-foot"><div className="health-dot"/><div><strong>Multi-workflow registry</strong><span>{agents.length} agents indexed</span></div></div>
       </aside>
 
       <section className="workspace">
@@ -162,7 +167,7 @@ function Overview({ agents, data, onOpen }: { agents: Agent[]; data: StudioData;
   const squads = Array.from(new Set(agents.map((a) => a.squad)));
   return <div className="view overview-view">
     <section className="hero-panel"><div><span className="live-pill"><i/> Current Kotiba architecture</span><h2>Understand the full chat<br/>before every sales answer.</h2><p>The new history analyzer reviews all available conversation context before Reasoning decides what to say next.</p><div className="hero-actions"><button className="primary" onClick={onOpen}>Open current registry <span>→</span></button><button className="secondary">View architecture</button></div></div><div className="orbit" aria-label="Current Kotiba agent orchestration diagram"><div className="orbit-ring ring-one"/><div className="orbit-ring ring-two"/><div className="orbit-core"><span>1 + 16</span><small>current system</small></div>{["Intent","Memory","History","Reasoning","Follow-up","Audit"].map((x,i)=><span key={x} className={`orbit-node node-${i+1}`}>{x}</span>)}</div></section>
-    <section className="metric-grid"><Metric label="Current agents" value={String(agents.length)} detail="1 orchestrator · 16 specialists" tone="violet"/><Metric label="History coverage" value="Full" detail="All available messages per turn" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Follow-up delay" value="5m" detail="Only when customer stays silent" tone="rose"/></section>
+    <section className="metric-grid"><Metric label="Registry agents" value={String(agents.length)} detail="Shared and workflow-specific specialists" tone="violet"/><Metric label="Website Q&A" value="Draft" detail="Isolated from Kotiba production" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Live sources" value="2" detail="Website SQLite catalog · approved pages" tone="rose"/></section>
     <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CURRENT CAPABILITY MAP</p><h3>{squads.length} groups, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>{agents.filter((agent)=>agent.squad===name).length} active components</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">CURRENT SCOPE</p><h3>Context before response</h3><div className="readiness-score"><span>17</span><small>agents</small></div><div className="progress"><i style={{width:"100%"}}/></div><ul><li className="done">Whole available chat analyzed</li><li className="done">Answered topics detected</li><li className="done">Unresolved need selected</li><li className="done">Repetitive questions blocked</li></ul></div></section>
   </div>;
 }
@@ -170,7 +175,7 @@ function Overview({ agents, data, onOpen }: { agents: Agent[]; data: StudioData;
 function Metric({ label, value, detail, tone }: { label:string; value:string; detail:string; tone:string }) { return <div className={`metric-card ${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>; }
 
 function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgent }: { agents:Agent[]; query:string; setQuery:(v:string)=>void; squad:string; setSquad:(v:string)=>void; squads:string[]; chooseAgent:(a:Agent)=>void }) {
-  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">CURRENT KOTIBA AGENTS</p><h2>Agent Registry</h2><p>One orchestrator and 16 specialists, including conversation-history analysis and catalog follow-up.</p></div><button className="secondary" disabled>Current scope locked</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
+  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">SHARED AND WORKFLOW-SPECIFIC AGENTS</p><h2>Agent Registry</h2><p>Current Kotiba agents remain intact; the MilanaPremium.uz customer-service specialists are isolated as draft agents.</p></div><button className="secondary" disabled>Production agents protected</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
 }
 
 type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
@@ -184,14 +189,14 @@ const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
 ];
 
 function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=>void }) {
-  const [nodes, setNodes] = useState<FlowNode[]>(universalOmnichannelWorkflow.nodes as FlowNode[]);
-  const [edges, setEdges] = useState<FlowEdge[]>(universalOmnichannelWorkflow.edges);
-  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(universalOmnichannelWorkflow.nodes as FlowNode[]);
-  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(universalOmnichannelWorkflow.edges);
-  const [selectedNodeId, setSelectedNodeId] = useState("universal_trigger");
-  const [flowName, setFlowName] = useState(universalOmnichannelWorkflow.name);
-  const [flowDescription, setFlowDescription] = useState(universalOmnichannelWorkflow.description);
-  const [flowId, setFlowId] = useState<string>(UNIVERSAL_WORKFLOW_ID);
+  const [nodes, setNodes] = useState<FlowNode[]>(milanaWebsiteQaWorkflow.nodes as FlowNode[]);
+  const [edges, setEdges] = useState<FlowEdge[]>(milanaWebsiteQaWorkflow.edges);
+  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(milanaWebsiteQaWorkflow.nodes as FlowNode[]);
+  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(milanaWebsiteQaWorkflow.edges);
+  const [selectedNodeId, setSelectedNodeId] = useState("web_trigger");
+  const [flowName, setFlowName] = useState(milanaWebsiteQaWorkflow.name);
+  const [flowDescription, setFlowDescription] = useState(milanaWebsiteQaWorkflow.description);
+  const [flowId, setFlowId] = useState<string>(MILANA_WEBSITE_QA_WORKFLOW_ID);
   const [flowStatus, setFlowStatus] = useState("draft");
   const [flowVersion, setFlowVersion] = useState(1);
   const [workflows, setWorkflows] = useState<StoredWorkflow[]>([]);
@@ -225,11 +230,11 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     if(next)loadWorkflow(next);
   };
 
-  useEffect(()=>{refreshWorkflows(UNIVERSAL_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
+  useEffect(()=>{refreshWorkflows(MILANA_WEBSITE_QA_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
 
   useEffect(()=>{
     if (!drag) return;
-    const move=(event:PointerEvent)=>setNodes((current)=>current.map((node)=>node.id===drag.id?{...node,x:Math.max(8,Math.min(1080,event.clientX-drag.offsetX)),y:Math.max(18,Math.min(500,event.clientY-drag.offsetY))}:node));
+    const move=(event:PointerEvent)=>setNodes((current)=>current.map((node)=>node.id===drag.id?{...node,x:Math.max(8,Math.min(2100,event.clientX-drag.offsetX)),y:Math.max(18,Math.min(500,event.clientY-drag.offsetY))}:node));
     const up=()=>setDrag(null);
     window.addEventListener("pointermove",move); window.addEventListener("pointerup",up);
     return()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};
@@ -276,24 +281,25 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     setTestResult(null);
     window.setTimeout(()=>{
       const humanOwned=simulatedOwnership==="HUMAN_ACTIVE";
-      const path=nodes.filter((node)=>node.type==="agent"||node.id==="tool_catalog"||node.id==="ownership_gate").map((node)=>({
+      const websiteFlow=flowId===MILANA_WEBSITE_QA_WORKFLOW_ID;
+      const path=nodes.filter((node)=>node.type==="agent"||node.id==="tool_catalog"||node.id==="ownership_gate"||node.type==="knowledge"||node.id==="web_customer_data").map((node)=>({
         label:node.label,
-        detail:node.id==="ownership_gate"?(humanOwned?"Detected a non-AI outbound message; AI and pending follow-ups are blocked until explicit resume":"Ownership is AI_ACTIVE; workflow may continue"):humanOwned?"Skipped because the conversation is HUMAN_ACTIVE":node.agentId===1?"Selected the catalog-delivery sales path":node.agentId===2?"Detected an Uzbek catalog request":node.agentId===6?"Loaded customer identity and saved preferences":node.agentId===17?"Reviewed 12 messages; found prior greeting, product interest, and an unresolved catalog request":node.agentId===8?"Used history analysis to choose immediate catalog delivery without repeating questions":node.id==="tool_catalog"?"Attached the current approved Milana Premium catalog":node.agentId===10?"No manager handoff required":node.agentId===11?"Recorded the simulated decision and attachment":node.agentId===16?"Scheduled one follow-up for +5 minutes; cancel on any customer reply":"Completed its assigned workflow step",
+        detail:node.id==="ownership_gate"?(humanOwned?"Detected a non-AI outbound message; AI and pending follow-ups are blocked until explicit resume":"Ownership is AI_ACTIVE; workflow may continue"):humanOwned?"Skipped because the conversation is HUMAN_ACTIVE":node.id==="web_catalog"?"Queried the live SQLite catalog and filtered to active products":node.id==="web_policy"?"Loaded approved ordering, support, terms, privacy, and partnership content":node.id==="web_customer_data"?"No customer-private data requested; authenticated scope stayed closed":node.agentId===25?"Compared the answer against source precedence and blocked stale policy claims":node.agentId===18?"Selected only catalog retrieval, stock/pack/price, and response composition":node.agentId===19?"Found model TJ-2182 / V-4607 in the active website catalog":node.agentId===20?"Verified $7.30 unit price, sizes 46–54, pack of 5, and tracked bag availability":node.agentId===21?"Skipped because the customer asked about a known model":node.agentId===22?"Skipped because no policy question was asked":node.agentId===23?"Skipped because no authenticated order or account operation was requested":node.agentId===24?"Composed a concise Uzbek answer with a product card and no unsupported guarantees":node.agentId===1?"Selected the catalog-delivery sales path":node.agentId===2?"Detected an Uzbek product and price request":node.agentId===6?"Loaded customer identity and saved preferences":node.agentId===17?"Reviewed the full available session and found an unresolved product question":node.agentId===8?"Used history analysis to choose immediate catalog delivery without repeating questions":node.id==="tool_catalog"?"Attached the current approved Milana Premium catalog":node.agentId===10?"No manager handoff required":node.agentId===11?"Recorded the simulated decision, sources, and result":node.agentId===16?"Scheduled one follow-up for +5 minutes; cancel on any customer reply":"Completed its assigned workflow step",
         status:(node.id==="ownership_gate"?"passed":humanOwned||node.agentId===10?"skipped":"passed") as "passed"|"skipped",
       }));
       setTestResult({
         runId:`SIM-${Date.now().toString().slice(-6)}`,
-        input:"Salom, yangi katalogni yubora olasizmi?",
-        output:humanOwned?"":"Assalomu alaykum! Albatta — yangi katalogimizni ilova qildim. Sizga yoqqan modelning rasmi yoki artikulini yuboring, narxi va buyurtma shartlarini tekshirib beraman.",
+        input:websiteFlow?"Salom, TJ-2182 narxi, razmerlari va eng kam buyurtmasi qancha?":"Salom, yangi katalogni yubora olasizmi?",
+        output:humanOwned?"":websiteFlow?"TJ-2182 (V-4607) tunikasi — $7.30/dona. Razmerlari: 46, 48, 50, 52, 54. Eng kam ulgurji buyurtma 1 qadoq — 5 dona, har razmerdan bittadan. Ombor qoldig‘i o‘zgarishi mumkin; yakuniy mavjudlikni buyurtma vaqtida tekshiramiz.":"Assalomu alaykum! Albatta — yangi katalogimizni ilova qildim. Sizga yoqqan modelning rasmi yoki artikulini yuboring, narxi va buyurtma shartlarini tekshirib beraman.",
         ownership:{before:humanOwned?"AI_ACTIVE":simulatedOwnership,event:humanOwned?"Human outbound detected":"Inbound customer message",after:simulatedOwnership,aiReplyAllowed:!humanOwned,reason:humanOwned?"Human owns this conversation. Only an authenticated Return to AI action can resume automation.":"No human takeover is active."},
-        history:{messages:12,language:"Uzbek",intent:"Receive the latest catalog",resolved:["Greeting answered","Wholesale interest recorded","Customer language known"],unresolved:"The requested catalog has not yet been delivered",nextAction:"Send the catalog now; do not ask again for phone number or product type"},
-        attachment:humanOwned?{name:"Catalog suppressed",format:"No attachment",size:"Human-owned conversation"}:{name:"Milana Premium — Latest Catalog.pdf",format:"PDF catalog",size:"Simulation attachment"},
-        followUp:humanOwned?{delay:"Not scheduled",condition:"Human takeover cancels pending automation",output:"No follow-up will be sent while the conversation is human-owned.",status:"Cancelled"}:{delay:"5 minutes after catalog",condition:"Send only if no customer reply, handoff, opt-out, or order activity",output:"Katalogni ko‘rib chiqishga ulgurdingizmi? Sizga yoqqan modelning rasmi yoki artikulini yuborsangiz, narxi va buyurtma shartlarini tekshirib beraman.",status:"Scheduled"},
+        history:websiteFlow?{messages:8,language:"Uzbek",intent:"Verify a specific product's price, sizes, and minimum order",resolved:["Customer language known","Model code supplied"],unresolved:"Verified product facts must be returned without using the obsolete generic six-piece rule",nextAction:"Query the active catalog, use the model's actual five-size pack, and answer directly"}:{messages:12,language:"Uzbek",intent:"Receive the latest catalog",resolved:["Greeting answered","Wholesale interest recorded","Customer language known"],unresolved:"The requested catalog has not yet been delivered",nextAction:"Send the catalog now; do not ask again for phone number or product type"},
+        attachment:humanOwned?{name:"Output suppressed",format:"No attachment",size:"Human-owned conversation"}:websiteFlow?{name:"TJ-2182 · V-4607",format:"Website product card",size:"Live catalog result"}:{name:"Milana Premium — Latest Catalog.pdf",format:"PDF catalog",size:"Simulation attachment"},
+        followUp:humanOwned?{delay:"Not scheduled",condition:"Human takeover cancels pending automation",output:"No follow-up will be sent while the conversation is human-owned.",status:"Cancelled"}:websiteFlow?{delay:"Not scheduled",condition:"Website Q&A sends no unsolicited follow-up by default",output:"The customer can continue in the same website session or request a manager.",status:"Cancelled"}:{delay:"5 minutes after catalog",condition:"Send only if no customer reply, handoff, opt-out, or order activity",output:"Katalogni ko‘rib chiqishga ulgurdingizmi? Sizga yoqqan modelning rasmi yoki artikulini yuborsangiz, narxi va buyurtma shartlarini tekshirib beraman.",status:"Scheduled"},
         latency:1840,
         path,
       });
       setRunning(false);
-      notify(humanOwned?"Flow simulation completed — AI correctly suppressed":"Flow simulation completed — output is ready");
+      notify(humanOwned?"Flow simulation completed — AI correctly suppressed":websiteFlow?"Website Q&A simulation completed — grounded output is ready":"Flow simulation completed — output is ready");
       window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
     },2200);
   };
@@ -308,7 +314,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
       <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} disabled={locked} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Choose from 17 current agents":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
       <section className={`flow-canvas ${locked?"is-locked":""}`} aria-label="Visual agent workflow canvas">
         <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button disabled={locked} onClick={()=>{setNodes(savedNodes);setEdges(savedEdges);setSelectedNodeId(savedNodes[0]?.id||"")}}>Reset</button></div>
-        <svg className="flow-connections" aria-hidden="true">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>
+        <svg className="flow-connections" aria-hidden="true" width="2250" height="610" viewBox="0 0 2250 610">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>
         {nodes.map((node)=><div key={node.id} role="button" tabIndex={0} className={`flow-node ${node.type} ${node.id===selectedNodeId?"selected":""} ${running?"is-running":""}`} style={{left:node.x,top:node.y}} onClick={()=>setSelectedNodeId(node.id)} onPointerDown={(event)=>{setSelectedNodeId(node.id);if(!locked)setDrag({id:node.id,offsetX:event.clientX-node.x,offsetY:event.clientY-node.y})}}><span className={`node-icon ${node.type}`}>{nodeTypes.find((item)=>item.type===node.type)?.mark}</span><div><strong>{node.label}</strong><small>{node.subtitle}</small></div><i className="port input"/><i className="port output"/></div>)}
       </section>
       <aside className="node-inspector"><p>{locked?"SNAPSHOT DETAILS":"NODE SETTINGS"}</p><label>Node label<input disabled={locked} value={selectedNode.label} onChange={(e)=>updateNode({label:e.target.value})}/></label><label>Type<select disabled={locked} value={selectedNode.type} onChange={(e)=>updateNode({type:e.target.value as FlowNode["type"]})}>{nodeTypes.map((item)=><option key={item.type} value={item.type}>{item.label}</option>)}</select></label>{selectedNode.type==="agent"&&<label>Assigned agent<select disabled={locked} value={selectedNode.agentId||""} onChange={(e)=>assignAgent(e.target.value)}><option value="">Choose specialist…</option>{agents.map((agent)=><option key={agent.id} value={agent.id}>{String(agent.id).padStart(3,"0")} · {agent.agent}</option>)}</select></label>}<label>Description<textarea disabled={locked} value={selectedNode.subtitle} onChange={(e)=>updateNode({subtitle:e.target.value})}/></label><div className="inspector-stat"><span>Incoming</span><b>{edges.filter((edge)=>edge.to===selectedNode.id).length}</b></div><div className="inspector-stat"><span>Outgoing</span><b>{edges.filter((edge)=>edge.from===selectedNode.id).length}</b></div><button className="danger-button" disabled={locked} onClick={()=>{setNodes((current)=>current.filter((node)=>node.id!==selectedNode.id));setEdges((current)=>current.filter((edge)=>edge.from!==selectedNode.id&&edge.to!==selectedNode.id));setSelectedNodeId(nodes[0]?.id)}}>Remove node</button></aside>

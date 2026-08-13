@@ -168,5 +168,85 @@
     "activation": "Core fast path",
     "status": "New",
     "surface": "Dashboard"
+  },
+  {
+    "id": 18,
+    "squad": "Website Customer Service",
+    "wave": "Website Q&A draft",
+    "agent": "Website Service Orchestrator",
+    "purpose": "Coordinates website customer questions, chooses only the required website specialists, and returns one grounded answer or a manager handoff.",
+    "activation": "Core fast path",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 19,
+    "squad": "Website Catalog Intelligence",
+    "wave": "Website Q&A draft",
+    "agent": "Product Catalog Retrieval Agent",
+    "purpose": "Searches the active Milana Premium website catalog by model, variant, category, gender, size, fabric, price, and availability without exposing hidden products.",
+    "activation": "On demand",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 20,
+    "squad": "Website Catalog Intelligence",
+    "wave": "Website Q&A draft",
+    "agent": "Stock, Pack & Price Agent",
+    "purpose": "Explains the selected product's verified unit price, size-specific pack quantity, 60-piece bag rule, retail eligibility, and mode-specific availability from live catalog fields.",
+    "activation": "On demand",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 21,
+    "squad": "Website Catalog Intelligence",
+    "wave": "Website Q&A draft",
+    "agent": "Product Recommendation Agent",
+    "purpose": "Ranks suitable active products from the current catalog using the customer's stated category, gender, size, fabric, price range, and prior conversation preferences.",
+    "activation": "On demand",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 22,
+    "squad": "Website Policy & Commerce",
+    "wave": "Website Q&A draft",
+    "agent": "Ordering & Policy Agent",
+    "purpose": "Answers ordering, delivery, payment, wholesale, partnership, working-hours, support, terms, and privacy questions from approved website policy sources.",
+    "activation": "On demand",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 23,
+    "squad": "Website Policy & Commerce",
+    "wave": "Website Q&A draft",
+    "agent": "Account, Order & Support Agent",
+    "purpose": "Handles authenticated account, order, payment, delivery-status, defect, review, and support-request questions while enforcing customer ownership and privacy boundaries.",
+    "activation": "On demand",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 24,
+    "squad": "Website Response Quality",
+    "wave": "Website Q&A draft",
+    "agent": "Multilingual Website Response Agent",
+    "purpose": "Composes the final concise website answer in Uzbek, Russian, or English, preserves the conversation language, and includes product cards or one clear next step when relevant.",
+    "activation": "Core fast path",
+    "status": "Draft",
+    "surface": "Website"
+  },
+  {
+    "id": 25,
+    "squad": "Website Response Quality",
+    "wave": "Website Q&A draft",
+    "agent": "Website Source Integrity Agent",
+    "purpose": "Resolves source precedence, detects contradictory or stale website facts, blocks unsupported commercial claims, and routes unresolved policy conflicts to a manager.",
+    "activation": "Core fast path",
+    "status": "Draft",
+    "surface": "Website"
   }
 ]

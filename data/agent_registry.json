@@ -158,5 +158,15 @@
     "activation": "Scheduled +5m",
     "status": "New",
     "surface": "Dashboard"
+  },
+  {
+    "id": 17,
+    "squad": "Understanding & Context",
+    "wave": "New addition",
+    "agent": "Conversation History Analyzer Agent",
+    "purpose": "Reviews the complete available conversation before every answer, identifies resolved and unresolved needs, commitments, language, products, lead state, and the best non-repetitive next action.",
+    "activation": "Core fast path",
+    "status": "New",
+    "surface": "Dashboard"
   }
 ]

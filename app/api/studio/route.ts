@@ -15,7 +15,7 @@ export async function GET() {
       db.select().from(evalCases).orderBy(desc(evalCases.createdAt)).limit(100),
       db.select().from(evalRuns).orderBy(desc(evalRuns.createdAt)).limit(100),
       db.select().from(releaseEvents).orderBy(desc(releaseEvents.createdAt)).limit(100),
-      db.select().from(agentProfiles).orderBy(desc(agentProfiles.updatedAt)).limit(216),
+      db.select().from(agentProfiles).orderBy(desc(agentProfiles.updatedAt)).limit(50),
     ]);
     return Response.json({ versions, cases, runs, releases, profiles });
   } catch (error) {

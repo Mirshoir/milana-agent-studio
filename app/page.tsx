@@ -23,7 +23,7 @@ const sampleMessages = [
 ];
 
 function promptFor(agent: Agent) {
-  return `You are the ${agent.agent} for Milana Premium.\n\nMISSION\n${agent.purpose}\n\nOPERATING RULES\n- Use only verified business, catalog, pricing, delivery, and policy data.\n- Preserve the customer’s language and conversational context.\n- Never invent product codes, prices, stock, sizes, delivery terms, or manager actions.\n- Return a concise structured result to the Sales Executive Orchestrator.\n- State uncertainty explicitly and request one targeted clarification when required.\n\nSUCCESS\nThe customer receives an accurate next step without repetition, delay, or unnecessary handoff.`;
+  return `You are the ${agent.agent} for Milana Premium.\n\nMISSION\n${agent.purpose}\n\nOPERATING RULES\n- Use only verified business, catalog, pricing, delivery, and policy data.\n- Preserve the customer’s language and conversational context.\n- Never invent product codes, prices, stock, sizes, delivery terms, or manager actions.\n- Return a concise structured result to the active Kotiba sales workflow.\n- State uncertainty explicitly and request one targeted clarification when required.\n\nSUCCESS\nThe customer receives an accurate next step without repetition, delay, or unnecessary handoff.`;
 }
 
 function routeFor(agent: Agent) {
@@ -130,7 +130,7 @@ export default function AgentStudio() {
         <nav aria-label="Studio navigation">
           {nav.map((item) => <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => setView(item.id)}><span>{item.mark}</span>{item.label}{item.id === "evaluations" && <em>{data.runs.length}</em>}</button>)}
         </nav>
-        <div className="sidebar-foot"><div className="health-dot"/><div><strong>Workspace healthy</strong><span>216 agents indexed</span></div></div>
+        <div className="sidebar-foot"><div className="health-dot"/><div><strong>Kotiba scope active</strong><span>15 existing agents indexed</span></div></div>
       </aside>
 
       <section className="workspace">
@@ -154,16 +154,16 @@ export default function AgentStudio() {
 function Overview({ agents, data, onOpen }: { agents: Agent[]; data: StudioData; onOpen: () => void }) {
   const squads = Array.from(new Set(agents.map((a) => a.squad)));
   return <div className="view overview-view">
-    <section className="hero-panel"><div><span className="live-pill"><i/> Live architecture</span><h2>One place to build, test,<br/>and release every sales agent.</h2><p>Inspect the complete 216-agent system, tune instructions visually, compare evaluation scores, and promote only approved versions.</p><div className="hero-actions"><button className="primary" onClick={onOpen}>Explore agent registry <span>→</span></button><button className="secondary">View architecture</button></div></div><div className="orbit" aria-label="Agent orchestration diagram"><div className="orbit-ring ring-one"/><div className="orbit-ring ring-two"/><div className="orbit-core"><span>4–8</span><small>active per turn</small></div>{["Context","Catalog","Language","Pricing","QA","Handoff"].map((x,i)=><span key={x} className={`orbit-node node-${i+1}`}>{x}</span>)}</div></section>
-    <section className="metric-grid"><Metric label="Registered agents" value="216" detail="18 domain squads" tone="violet"/><Metric label="Saved prompt versions" value={String(data.versions.length)} detail="Durable workspace history" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Production risk" value="67.8%" detail="Learning examples need conflict review" tone="rose"/></section>
-    <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CAPABILITY MAP</p><h3>18 squads, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>12 specialists</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">RELEASE READINESS</p><h3>Guarded by evidence</h3><div className="readiness-score"><span>82</span><small>/100</small></div><div className="progress"><i style={{width:"82%"}}/></div><ul><li className="done">Prompt registry created</li><li className="done">Version history enabled</li><li>Production eval set required</li><li>Two-person approval recommended</li></ul></div></section>
+    <section className="hero-panel"><div><span className="live-pill"><i/> Current Kotiba architecture</span><h2>Improve the agents already<br/>serving Milana sales.</h2><p>Work with the existing orchestrator and 14 specialists first: tune prompts, connect their flow, evaluate replies, and release controlled updates.</p><div className="hero-actions"><button className="primary" onClick={onOpen}>Open current registry <span>→</span></button><button className="secondary">View architecture</button></div></div><div className="orbit" aria-label="Current Kotiba agent orchestration diagram"><div className="orbit-ring ring-one"/><div className="orbit-ring ring-two"/><div className="orbit-core"><span>1 + 14</span><small>current system</small></div>{["Intent","Memory","Media","Reasoning","Handoff","Audit"].map((x,i)=><span key={x} className={`orbit-node node-${i+1}`}>{x}</span>)}</div></section>
+    <section className="metric-grid"><Metric label="Current agents" value={String(agents.length)} detail="1 orchestrator · 14 specialists" tone="violet"/><Metric label="Saved prompt versions" value={String(data.versions.length)} detail="Durable workspace history" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Dashboard gap" value="1" detail="Lead Status is backend-only" tone="rose"/></section>
+    <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CURRENT CAPABILITY MAP</p><h3>{squads.length} groups, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>{agents.filter((agent)=>agent.squad===name).length} active components</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">CURRENT SCOPE</p><h3>Existing agents first</h3><div className="readiness-score"><span>15</span><small>agents</small></div><div className="progress"><i style={{width:"100%"}}/></div><ul><li className="done">Orchestrator included</li><li className="done">14 specialists mapped</li><li className="done">Lead Status backend role visible</li><li>MCP Gateway reserved for integrations</li></ul></div></section>
   </div>;
 }
 
 function Metric({ label, value, detail, tone }: { label:string; value:string; detail:string; tone:string }) { return <div className={`metric-card ${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>; }
 
 function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgent }: { agents:Agent[]; query:string; setQuery:(v:string)=>void; squad:string; setSquad:(v:string)=>void; squads:string[]; chooseAgent:(a:Agent)=>void }) {
-  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">216 BOUNDED SPECIALISTS</p><h2>Agent Registry</h2><p>Every capability has one owner, one activation rule, and one place to tune it.</p></div><button className="primary">＋ New specialist</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, squad, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Squad</span><span>Activation</span><span>Wave</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.wave}</span><span><b className="status draft">Draft</b></span><span className="arrow">→</span></button>)}</div></div>;
+  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">CURRENT KOTIBA AGENTS</p><h2>Agent Registry</h2><p>One orchestrator and 14 specialists already present in the Kotiba sales system.</p></div><button className="secondary" disabled>Current scope locked</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
 }
 
 type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
@@ -171,15 +171,16 @@ type FlowEdge = { id:string; from:string; to:string };
 
 const initialFlowNodes: FlowNode[] = [
   { id:"trigger_1", type:"trigger", label:"Instagram inbound", subtitle:"Message or media event", x:44, y:170 },
-  { id:"agent_1", type:"agent", label:"Context Resolver", subtitle:"Agent 013 · Core fast path", x:285, y:82, agentId:13 },
-  { id:"router_1", type:"router", label:"Intent Router", subtitle:"Choose the smallest team", x:285, y:270 },
-  { id:"knowledge_1", type:"knowledge", label:"Catalog knowledge", subtitle:"Retrieve verified product truth", x:548, y:82 },
-  { id:"agent_2", type:"agent", label:"Pricing specialist", subtitle:"Agent 073 · On demand", x:548, y:270, agentId:73 },
-  { id:"guard_1", type:"guardrail", label:"Response QA", subtitle:"Grounding · language · safety", x:805, y:170 },
-  { id:"output_1", type:"output", label:"Send reply", subtitle:"Instagram DM", x:1045, y:170 },
+  { id:"agent_1", type:"agent", label:"Sales Agent Orchestrator", subtitle:"Agent 001 · Core fast path", x:270, y:170, agentId:1 },
+  { id:"agent_2", type:"agent", label:"Intent Agent", subtitle:"Agent 002 · Core fast path", x:458, y:60, agentId:2 },
+  { id:"agent_3", type:"agent", label:"Customer Memory Agent", subtitle:"Agent 006 · Core fast path", x:458, y:280, agentId:6 },
+  { id:"agent_4", type:"agent", label:"Reasoning Agent", subtitle:"Agent 008 · Core fast path", x:650, y:170, agentId:8 },
+  { id:"agent_5", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · On demand", x:842, y:60, agentId:10 },
+  { id:"agent_6", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Async or scheduled", x:842, y:280, agentId:11 },
+  { id:"output_1", type:"output", label:"Reply or manager handoff", subtitle:"Instagram DM / Kotiba manager", x:1034, y:170 },
 ];
 const initialFlowEdges: FlowEdge[] = [
-  {id:"e1",from:"trigger_1",to:"agent_1"},{id:"e2",from:"trigger_1",to:"router_1"},{id:"e3",from:"agent_1",to:"knowledge_1"},{id:"e4",from:"router_1",to:"agent_2"},{id:"e5",from:"knowledge_1",to:"guard_1"},{id:"e6",from:"agent_2",to:"guard_1"},{id:"e7",from:"guard_1",to:"output_1"},
+  {id:"e1",from:"trigger_1",to:"agent_1"},{id:"e2",from:"agent_1",to:"agent_2"},{id:"e3",from:"agent_1",to:"agent_3"},{id:"e4",from:"agent_2",to:"agent_4"},{id:"e5",from:"agent_3",to:"agent_4"},{id:"e6",from:"agent_4",to:"agent_5"},{id:"e7",from:"agent_4",to:"agent_6"},{id:"e8",from:"agent_5",to:"output_1"},{id:"e9",from:"agent_6",to:"output_1"},
 ];
 const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
   {type:"trigger",label:"Trigger",mark:"⚡"},{type:"agent",label:"Agent",mark:"A"},{type:"router",label:"Router",mark:"◇"},{type:"knowledge",label:"Knowledge",mark:"K"},{type:"condition",label:"Condition",mark:"?"},{type:"guardrail",label:"Guardrail",mark:"✓"},{type:"tool",label:"Tool",mark:"T"},{type:"output",label:"Output",mark:"→"},
@@ -188,8 +189,8 @@ const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
 function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=>void }) {
   const [nodes, setNodes] = useState(initialFlowNodes);
   const [edges, setEdges] = useState(initialFlowEdges);
-  const [selectedNodeId, setSelectedNodeId] = useState("router_1");
-  const [flowName, setFlowName] = useState("Instagram sales fast path");
+  const [selectedNodeId, setSelectedNodeId] = useState("agent_1");
+  const [flowName, setFlowName] = useState("Current Kotiba Instagram sales path");
   const [flowId, setFlowId] = useState<string>();
   const [drag, setDrag] = useState<null|{id:string;offsetX:number;offsetY:number}>(null);
   const [running, setRunning] = useState(false);
@@ -220,13 +221,13 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     if(!response.ok)return notify(payload.error||"Workflow save failed");
     setFlowId(payload.id);notify("Workflow saved");
   };
-  const runFlow=()=>{setRunning(true);window.setTimeout(()=>{setRunning(false);notify("Flow simulation passed all 7 steps")},2200)};
+  const runFlow=()=>{setRunning(true);window.setTimeout(()=>{setRunning(false);notify("Flow simulation passed across the current Kotiba agents")},2200)};
   const nodeCenter=(id:string)=>{const node=nodes.find((item)=>item.id===id);return node?{x:node.x+86,y:node.y+42}:{x:0,y:0}};
 
   return <div className="view flow-view">
     <div className="flow-titlebar"><div><p className="eyebrow">VISUAL ORCHESTRATION</p><input aria-label="Workflow name" value={flowName} onChange={(e)=>setFlowName(e.target.value)}/><p>Connect agents, knowledge, conditions, tools, and guardrails without editing backend code.</p></div><div><span className="sandbox-badge">Draft workflow</span><button className="secondary" onClick={runFlow} disabled={running}>{running?"Running…":"▶ Test flow"}</button><button className="primary" onClick={saveFlow}>Save workflow</button></div></div>
     <div className="flow-layout">
-      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Any of 216 specialists":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
+      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Choose from 15 current agents":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
       <section className="flow-canvas" aria-label="Visual agent workflow canvas">
         <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button onClick={()=>{setNodes(initialFlowNodes);setEdges(initialFlowEdges)}}>Reset</button></div>
         <svg className="flow-connections" aria-hidden="true">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>

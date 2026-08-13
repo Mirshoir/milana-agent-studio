@@ -2,6 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import registryData from "@/data/agent_registry.json";
+import {
+  CURRENT_WORKFLOW_ID,
+  UNIVERSAL_WORKFLOW_ID,
+  universalOmnichannelWorkflow,
+  workflowTemplates,
+  type WorkflowTemplate,
+} from "@/data/workflow_templates";
 
 type Agent = (typeof registryData)[number];
 type View = "overview" | "registry" | "flow" | "prompt" | "evaluations" | "releases";
@@ -170,40 +177,55 @@ type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condit
 type FlowEdge = { id:string; from:string; to:string };
 type OwnershipState = "AI_ACTIVE"|"HUMAN_ACTIVE";
 type FlowTestResult = { runId:string; input:string; output:string; latency:number; ownership:{before:OwnershipState;event:string;after:OwnershipState;aiReplyAllowed:boolean;reason:string}; history:{messages:number;language:string;intent:string;resolved:string[];unresolved:string;nextAction:string}; attachment:{name:string;format:string;size:string}; followUp:{delay:string;condition:string;output:string;status:string}; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
+type StoredWorkflow = { id:string; name:string; description:string; status:string; nodesJson:string; edgesJson:string; version:number; updatedAt:string };
 
-const initialFlowNodes: FlowNode[] = [
-  { id:"trigger_1", type:"trigger", label:"Instagram inbound", subtitle:"Message or media event", x:44, y:170 },
-  { id:"ownership_gate", type:"guardrail", label:"Conversation Ownership Gate", subtitle:"Block AI while a human owns the chat", x:270, y:430 },
-  { id:"agent_1", type:"agent", label:"Sales Agent Orchestrator", subtitle:"Agent 001 · Core fast path", x:270, y:170, agentId:1 },
-  { id:"agent_2", type:"agent", label:"Intent Agent", subtitle:"Agent 002 · Core fast path", x:458, y:60, agentId:2 },
-  { id:"agent_3", type:"agent", label:"Customer Memory Agent", subtitle:"Agent 006 · Core fast path", x:458, y:280, agentId:6 },
-  { id:"agent_history", type:"agent", label:"Conversation History Analyzer", subtitle:"Agent 017 · Analyze full chat first", x:650, y:60, agentId:17 },
-  { id:"agent_4", type:"agent", label:"Reasoning Agent", subtitle:"Agent 008 · Uses history analysis", x:650, y:280, agentId:8 },
-  { id:"agent_5", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · On demand", x:842, y:22, agentId:10 },
-  { id:"tool_catalog", type:"tool", label:"Catalog Delivery", subtitle:"Attach the current approved catalog", x:842, y:170 },
-  { id:"agent_6", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Async or scheduled", x:842, y:318, agentId:11 },
-  { id:"output_1", type:"output", label:"Reply or manager handoff", subtitle:"Instagram DM / Kotiba manager", x:1034, y:170 },
-  { id:"agent_7", type:"agent", label:"Catalog Follow-Up Agent", subtitle:"Agent 016 · Wait 5m · cancel on reply", x:1034, y:330, agentId:16 },
-  { id:"output_followup", type:"output", label:"Send follow-up", subtitle:"Only if customer remains silent", x:1034, y:470 },
-];
-const initialFlowEdges: FlowEdge[] = [
-  {id:"e0",from:"trigger_1",to:"ownership_gate"},{id:"e1",from:"ownership_gate",to:"agent_1"},{id:"e2",from:"agent_1",to:"agent_2"},{id:"e3",from:"agent_1",to:"agent_3"},{id:"e4",from:"agent_2",to:"agent_history"},{id:"e5",from:"agent_3",to:"agent_history"},{id:"e6",from:"agent_history",to:"agent_4"},{id:"e7",from:"agent_4",to:"agent_5"},{id:"e8",from:"agent_4",to:"tool_catalog"},{id:"e9",from:"agent_4",to:"agent_6"},{id:"e10",from:"agent_5",to:"output_1"},{id:"e11",from:"tool_catalog",to:"output_1"},{id:"e12",from:"agent_6",to:"output_1"},{id:"e13",from:"tool_catalog",to:"agent_7"},{id:"e14",from:"agent_7",to:"output_followup"},
-];
 const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
   {type:"trigger",label:"Trigger",mark:"⚡"},{type:"agent",label:"Agent",mark:"A"},{type:"router",label:"Router",mark:"◇"},{type:"knowledge",label:"Knowledge",mark:"K"},{type:"condition",label:"Condition",mark:"?"},{type:"guardrail",label:"Guardrail",mark:"✓"},{type:"tool",label:"Tool",mark:"T"},{type:"output",label:"Output",mark:"→"},
 ];
 
 function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=>void }) {
-  const [nodes, setNodes] = useState(initialFlowNodes);
-  const [edges, setEdges] = useState(initialFlowEdges);
-  const [selectedNodeId, setSelectedNodeId] = useState("agent_1");
-  const [flowName, setFlowName] = useState("Current Kotiba Instagram sales path");
-  const [flowId, setFlowId] = useState<string>();
+  const [nodes, setNodes] = useState<FlowNode[]>(universalOmnichannelWorkflow.nodes as FlowNode[]);
+  const [edges, setEdges] = useState<FlowEdge[]>(universalOmnichannelWorkflow.edges);
+  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(universalOmnichannelWorkflow.nodes as FlowNode[]);
+  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(universalOmnichannelWorkflow.edges);
+  const [selectedNodeId, setSelectedNodeId] = useState("universal_trigger");
+  const [flowName, setFlowName] = useState(universalOmnichannelWorkflow.name);
+  const [flowDescription, setFlowDescription] = useState(universalOmnichannelWorkflow.description);
+  const [flowId, setFlowId] = useState<string>(UNIVERSAL_WORKFLOW_ID);
+  const [flowStatus, setFlowStatus] = useState("draft");
+  const [flowVersion, setFlowVersion] = useState(1);
+  const [workflows, setWorkflows] = useState<StoredWorkflow[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("New reusable agent workflow");
+  const [createTemplate, setCreateTemplate] = useState<keyof typeof workflowTemplates>("universal");
+  const [saving, setSaving] = useState(false);
   const [drag, setDrag] = useState<null|{id:string;offsetX:number;offsetY:number}>(null);
   const [running, setRunning] = useState(false);
   const [testResult, setTestResult] = useState<FlowTestResult|null>(null);
   const [simulatedOwnership, setSimulatedOwnership] = useState<OwnershipState>("AI_ACTIVE");
   const selectedNode = nodes.find((node)=>node.id===selectedNodeId) ?? nodes[0];
+  const locked = flowStatus === "production_locked" || flowId === CURRENT_WORKFLOW_ID;
+
+  const loadWorkflow=(workflow:StoredWorkflow)=>{
+    const nextNodes=JSON.parse(workflow.nodesJson) as FlowNode[];
+    const nextEdges=JSON.parse(workflow.edgesJson) as FlowEdge[];
+    setNodes(nextNodes);setEdges(nextEdges);setSavedNodes(nextNodes);setSavedEdges(nextEdges);setSelectedNodeId(nextNodes[0]?.id||"");
+    setFlowId(workflow.id);setFlowName(workflow.name);setFlowDescription(workflow.description);
+    setFlowStatus(workflow.status);setFlowVersion(workflow.version||1);setTestResult(null);
+  };
+
+  const refreshWorkflows=async(preferredId?:string)=>{
+    const response=await fetch("/api/flows");
+    if(!response.ok)throw new Error("Could not load workflows");
+    const payload=await response.json() as {workflows:StoredWorkflow[]};
+    setWorkflows(payload.workflows||[]);
+    const next=(payload.workflows||[]).find((item)=>item.id===(preferredId||flowId))
+      ||(payload.workflows||[]).find((item)=>item.id===UNIVERSAL_WORKFLOW_ID)
+      ||payload.workflows?.[0];
+    if(next)loadWorkflow(next);
+  };
+
+  useEffect(()=>{refreshWorkflows(UNIVERSAL_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
 
   useEffect(()=>{
     if (!drag) return;
@@ -214,6 +236,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
   },[drag]);
 
   const addNode=(type:FlowNode["type"])=>{
+    if(locked)return notify("The production snapshot is locked. Create a new workflow to edit.");
     const definition=nodeTypes.find((item)=>item.type===type)!;
     const id=`${type}_${crypto.randomUUID().slice(0,8)}`;
     const last=nodes[nodes.length-1];
@@ -222,13 +245,31 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     if(last)setEdges((current)=>[...current,{id:`edge_${crypto.randomUUID().slice(0,8)}`,from:last.id,to:id}]);
     setSelectedNodeId(id);
   };
-  const updateNode=(changes:Partial<FlowNode>)=>setNodes((current)=>current.map((node)=>node.id===selectedNodeId?{...node,...changes}:node));
+  const updateNode=(changes:Partial<FlowNode>)=>{
+    if(locked)return;
+    setNodes((current)=>current.map((node)=>node.id===selectedNodeId?{...node,...changes}:node));
+  };
   const assignAgent=(value:string)=>{const agent=agents.find((item)=>String(item.id)===value);if(agent)updateNode({agentId:agent.id,label:agent.agent,subtitle:`Agent ${String(agent.id).padStart(3,"0")} · ${agent.activation}`})};
   const saveFlow=async()=>{
-    const response=await fetch("/api/flows",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:flowId,name:flowName,description:"Visual Milana sales-agent orchestration",nodes,edges})});
+    if(locked)return notify("This production snapshot is locked and already saved.");
+    setSaving(true);
+    try{
+      const response=await fetch("/api/flows",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:flowId,name:flowName,description:flowDescription,nodes,edges})});
+      const payload=await response.json() as {id?:string;version?:number;error?:string};
+      if(!response.ok)return notify(payload.error||"Workflow save failed");
+      setFlowId(payload.id!);setFlowVersion(payload.version||flowVersion);notify(`Workflow v${payload.version||flowVersion} saved`);
+      await refreshWorkflows(payload.id);
+    }finally{setSaving(false)}
+  };
+  const createWorkflow=async()=>{
+    const template=workflowTemplates[createTemplate] as WorkflowTemplate;
+    const freshNodes=(template.nodes as FlowNode[]).map((node)=>({...node,id:`${node.id}_${crypto.randomUUID().slice(0,6)}`}));
+    const idMap=new Map(template.nodes.map((node,index)=>[node.id,freshNodes[index].id]));
+    const freshEdges=template.edges.map((edge)=>({...edge,id:`edge_${crypto.randomUUID().slice(0,8)}`,from:idMap.get(edge.from)!,to:idMap.get(edge.to)!}));
+    const response=await fetch("/api/flows",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:createName.trim()||template.name,description:template.description,nodes:freshNodes,edges:freshEdges})});
     const payload=await response.json() as {id?:string;error?:string};
-    if(!response.ok)return notify(payload.error||"Workflow save failed");
-    setFlowId(payload.id);notify("Workflow saved");
+    if(!response.ok)return notify(payload.error||"Could not create workflow");
+    setCreateOpen(false);notify("New draft workflow created");await refreshWorkflows(payload.id);
   };
   const runFlow=()=>{
     setRunning(true);
@@ -259,16 +300,18 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
   const nodeCenter=(id:string)=>{const node=nodes.find((item)=>item.id===id);return node?{x:node.x+86,y:node.y+42}:{x:0,y:0}};
 
   return <div className="view flow-view">
-    <div className="flow-titlebar"><div><p className="eyebrow">VISUAL ORCHESTRATION</p><input aria-label="Workflow name" value={flowName} onChange={(e)=>setFlowName(e.target.value)}/><p>Connect agents, knowledge, conditions, tools, and guardrails without editing backend code.</p></div><div><span className="sandbox-badge">Draft workflow</span><button className="secondary" onClick={runFlow} disabled={running}>{running?"Running…":"▶ Test flow"}</button><button className="primary" onClick={saveFlow}>Save workflow</button></div></div>
+    <div className="workflow-library-bar"><label><span>Workflow</span><select aria-label="Choose workflow" value={flowId} onChange={(event)=>{const workflow=workflows.find((item)=>item.id===event.target.value);if(workflow)loadWorkflow(workflow)}}>{workflows.map((workflow)=><option key={workflow.id} value={workflow.id}>{workflow.status==="production_locked"?"🔒 ":""}{workflow.name}</option>)}</select></label><div><span>{workflows.length} saved workflows</span><button className="primary create-workflow-button" onClick={()=>setCreateOpen(true)}>＋ Create new workflow</button></div></div>
+    <div className="flow-titlebar"><div><p className="eyebrow">VISUAL ORCHESTRATION</p><input aria-label="Workflow name" value={flowName} readOnly={locked} onChange={(e)=>setFlowName(e.target.value)}/><p>{flowDescription}</p></div><div><span className={`sandbox-badge ${locked?"locked":""}`}>{locked?"Saved production snapshot":`Draft · v${flowVersion}`}</span><button className="secondary" onClick={runFlow} disabled={running}>{running?"Running…":"▶ Test flow"}</button><button className="primary" onClick={saveFlow} disabled={locked||saving}>{locked?"Snapshot saved":saving?"Saving…":"Save workflow"}</button></div></div>
+    {locked&&<div className="workflow-lock-note"><span>🔒</span><div><strong>This workflow is preserved exactly as it was.</strong><p>Testing is allowed, but editing and overwriting are blocked. Use Create new workflow for changes.</p></div></div>}
     <section className={`ownership-simulator ${simulatedOwnership==="HUMAN_ACTIVE"?"human":"ai"}`}><div><p className="eyebrow">CONVERSATION OWNERSHIP TEST</p><strong>{simulatedOwnership==="AI_ACTIVE"?"AI owns the conversation":"Human owns the conversation"}</strong><span>{simulatedOwnership==="AI_ACTIVE"?"AI replies and catalog follow-ups are allowed.":"AI replies and pending follow-ups must remain blocked."}</span></div><div><button className={simulatedOwnership==="AI_ACTIVE"?"active":""} onClick={()=>setSimulatedOwnership("AI_ACTIVE")}>Return to AI</button><button className={simulatedOwnership==="HUMAN_ACTIVE"?"active":""} onClick={()=>setSimulatedOwnership("HUMAN_ACTIVE")}>Simulate human reply</button></div></section>
     <div className="flow-layout">
-      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Choose from 17 current agents":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
-      <section className="flow-canvas" aria-label="Visual agent workflow canvas">
-        <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button onClick={()=>{setNodes(initialFlowNodes);setEdges(initialFlowEdges)}}>Reset</button></div>
+      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} disabled={locked} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Choose from 17 current agents":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
+      <section className={`flow-canvas ${locked?"is-locked":""}`} aria-label="Visual agent workflow canvas">
+        <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button disabled={locked} onClick={()=>{setNodes(savedNodes);setEdges(savedEdges);setSelectedNodeId(savedNodes[0]?.id||"")}}>Reset</button></div>
         <svg className="flow-connections" aria-hidden="true">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>
-        {nodes.map((node)=><div key={node.id} role="button" tabIndex={0} className={`flow-node ${node.type} ${node.id===selectedNodeId?"selected":""} ${running?"is-running":""}`} style={{left:node.x,top:node.y}} onClick={()=>setSelectedNodeId(node.id)} onPointerDown={(event)=>{setSelectedNodeId(node.id);setDrag({id:node.id,offsetX:event.clientX-node.x,offsetY:event.clientY-node.y})}}><span className={`node-icon ${node.type}`}>{nodeTypes.find((item)=>item.type===node.type)?.mark}</span><div><strong>{node.label}</strong><small>{node.subtitle}</small></div><i className="port input"/><i className="port output"/></div>)}
+        {nodes.map((node)=><div key={node.id} role="button" tabIndex={0} className={`flow-node ${node.type} ${node.id===selectedNodeId?"selected":""} ${running?"is-running":""}`} style={{left:node.x,top:node.y}} onClick={()=>setSelectedNodeId(node.id)} onPointerDown={(event)=>{setSelectedNodeId(node.id);if(!locked)setDrag({id:node.id,offsetX:event.clientX-node.x,offsetY:event.clientY-node.y})}}><span className={`node-icon ${node.type}`}>{nodeTypes.find((item)=>item.type===node.type)?.mark}</span><div><strong>{node.label}</strong><small>{node.subtitle}</small></div><i className="port input"/><i className="port output"/></div>)}
       </section>
-      <aside className="node-inspector"><p>NODE SETTINGS</p><label>Node label<input value={selectedNode.label} onChange={(e)=>updateNode({label:e.target.value})}/></label><label>Type<select value={selectedNode.type} onChange={(e)=>updateNode({type:e.target.value as FlowNode["type"]})}>{nodeTypes.map((item)=><option key={item.type} value={item.type}>{item.label}</option>)}</select></label>{selectedNode.type==="agent"&&<label>Assigned agent<select value={selectedNode.agentId||""} onChange={(e)=>assignAgent(e.target.value)}><option value="">Choose specialist…</option>{agents.map((agent)=><option key={agent.id} value={agent.id}>{String(agent.id).padStart(3,"0")} · {agent.agent}</option>)}</select></label>}<label>Description<textarea value={selectedNode.subtitle} onChange={(e)=>updateNode({subtitle:e.target.value})}/></label><div className="inspector-stat"><span>Incoming</span><b>{edges.filter((edge)=>edge.to===selectedNode.id).length}</b></div><div className="inspector-stat"><span>Outgoing</span><b>{edges.filter((edge)=>edge.from===selectedNode.id).length}</b></div><button className="danger-button" onClick={()=>{setNodes((current)=>current.filter((node)=>node.id!==selectedNode.id));setEdges((current)=>current.filter((edge)=>edge.from!==selectedNode.id&&edge.to!==selectedNode.id));setSelectedNodeId(nodes[0]?.id)}}>Remove node</button></aside>
+      <aside className="node-inspector"><p>{locked?"SNAPSHOT DETAILS":"NODE SETTINGS"}</p><label>Node label<input disabled={locked} value={selectedNode.label} onChange={(e)=>updateNode({label:e.target.value})}/></label><label>Type<select disabled={locked} value={selectedNode.type} onChange={(e)=>updateNode({type:e.target.value as FlowNode["type"]})}>{nodeTypes.map((item)=><option key={item.type} value={item.type}>{item.label}</option>)}</select></label>{selectedNode.type==="agent"&&<label>Assigned agent<select disabled={locked} value={selectedNode.agentId||""} onChange={(e)=>assignAgent(e.target.value)}><option value="">Choose specialist…</option>{agents.map((agent)=><option key={agent.id} value={agent.id}>{String(agent.id).padStart(3,"0")} · {agent.agent}</option>)}</select></label>}<label>Description<textarea disabled={locked} value={selectedNode.subtitle} onChange={(e)=>updateNode({subtitle:e.target.value})}/></label><div className="inspector-stat"><span>Incoming</span><b>{edges.filter((edge)=>edge.to===selectedNode.id).length}</b></div><div className="inspector-stat"><span>Outgoing</span><b>{edges.filter((edge)=>edge.from===selectedNode.id).length}</b></div><button className="danger-button" disabled={locked} onClick={()=>{setNodes((current)=>current.filter((node)=>node.id!==selectedNode.id));setEdges((current)=>current.filter((edge)=>edge.from!==selectedNode.id&&edge.to!==selectedNode.id));setSelectedNodeId(nodes[0]?.id)}}>Remove node</button></aside>
     </div>
     {(running||testResult)&&<section id="flow-test-output" className={`flow-test-output ${running?"is-running":""}`} aria-live="polite">
       {running?<div className="run-progress"><span className="run-spinner"/><div><p className="eyebrow">TEST RUN IN PROGRESS</p><h3>Executing the current workflow…</h3><p>Tracing every agent decision. No live Instagram message will be sent.</p></div></div>:testResult&&<>
@@ -279,6 +322,11 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
         </div>
       </>}
     </section>}
+    {createOpen&&<div className="workflow-modal-backdrop" role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget)setCreateOpen(false)}}><section className="workflow-modal" role="dialog" aria-modal="true" aria-labelledby="create-workflow-title"><header><div><p className="eyebrow">WORKFLOW LIBRARY</p><h3 id="create-workflow-title">Create new workflow</h3><p>Start separately from the locked Kotiba production snapshot.</p></div><button className="modal-close" aria-label="Close" onClick={()=>setCreateOpen(false)}>×</button></header><label>Workflow name<input autoFocus value={createName} onChange={(event)=>setCreateName(event.target.value)}/></label><fieldset><legend>Starting point</legend><div className="workflow-template-grid">{([
+      ["universal","Universal omnichannel","Website, bots, API, automations, ChatGPT, Claude, and MCP"],
+      ["website","Website Q&A","Grounded answers from approved pages, files, and business facts"],
+      ["blank","Blank canvas","A simple input → agent selector → output foundation"],
+    ] as const).map(([id,title,description])=><label key={id} className={createTemplate===id?"selected":""}><input type="radio" name="workflow-template" checked={createTemplate===id} onChange={()=>{setCreateTemplate(id);setCreateName(workflowTemplates[id].name)}}/><span><strong>{title}</strong><small>{description}</small></span></label>)}</div></fieldset><footer><button className="secondary" onClick={()=>setCreateOpen(false)}>Cancel</button><button className="primary" onClick={createWorkflow}>Create draft workflow</button></footer></section></div>}
   </div>;
 }
 

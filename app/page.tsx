@@ -168,6 +168,7 @@ function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgen
 
 type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
 type FlowEdge = { id:string; from:string; to:string };
+type FlowTestResult = { runId:string; input:string; output:string; latency:number; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
 
 const initialFlowNodes: FlowNode[] = [
   { id:"trigger_1", type:"trigger", label:"Instagram inbound", subtitle:"Message or media event", x:44, y:170 },
@@ -194,6 +195,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
   const [flowId, setFlowId] = useState<string>();
   const [drag, setDrag] = useState<null|{id:string;offsetX:number;offsetY:number}>(null);
   const [running, setRunning] = useState(false);
+  const [testResult, setTestResult] = useState<FlowTestResult|null>(null);
   const selectedNode = nodes.find((node)=>node.id===selectedNodeId) ?? nodes[0];
 
   useEffect(()=>{
@@ -221,7 +223,27 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     if(!response.ok)return notify(payload.error||"Workflow save failed");
     setFlowId(payload.id);notify("Workflow saved");
   };
-  const runFlow=()=>{setRunning(true);window.setTimeout(()=>{setRunning(false);notify("Flow simulation passed across the current Kotiba agents")},2200)};
+  const runFlow=()=>{
+    setRunning(true);
+    setTestResult(null);
+    window.setTimeout(()=>{
+      const path=nodes.filter((node)=>node.type==="agent").map((node)=>({
+        label:node.label,
+        detail:node.agentId===1?"Selected the sales response path":node.agentId===2?"Detected Uzbek product-interest intent":node.agentId===6?"Loaded language and customer context":node.agentId===8?"Chose catalog clarification as the next action":node.agentId===10?"No manager handoff required":node.agentId===11?"Recorded the simulated decision trace":"Completed its assigned workflow step",
+        status:(node.agentId===10?"skipped":"passed") as "passed"|"skipped",
+      }));
+      setTestResult({
+        runId:`SIM-${Date.now().toString().slice(-6)}`,
+        input:"Salom, yangi katalogni yubora olasizmi?",
+        output:"Assalomu alaykum! Albatta, yangi katalogimizni yuboraman. Sizni ko‘proq qaysi turdagi modellar qiziqtiradi? Shunga mos variantlarni ham ajratib ko‘rsataman.",
+        latency:1840,
+        path,
+      });
+      setRunning(false);
+      notify("Flow simulation completed — output is ready");
+      window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
+    },2200);
+  };
   const nodeCenter=(id:string)=>{const node=nodes.find((item)=>item.id===id);return node?{x:node.x+86,y:node.y+42}:{x:0,y:0}};
 
   return <div className="view flow-view">
@@ -235,6 +257,15 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
       </section>
       <aside className="node-inspector"><p>NODE SETTINGS</p><label>Node label<input value={selectedNode.label} onChange={(e)=>updateNode({label:e.target.value})}/></label><label>Type<select value={selectedNode.type} onChange={(e)=>updateNode({type:e.target.value as FlowNode["type"]})}>{nodeTypes.map((item)=><option key={item.type} value={item.type}>{item.label}</option>)}</select></label>{selectedNode.type==="agent"&&<label>Assigned agent<select value={selectedNode.agentId||""} onChange={(e)=>assignAgent(e.target.value)}><option value="">Choose specialist…</option>{agents.map((agent)=><option key={agent.id} value={agent.id}>{String(agent.id).padStart(3,"0")} · {agent.agent}</option>)}</select></label>}<label>Description<textarea value={selectedNode.subtitle} onChange={(e)=>updateNode({subtitle:e.target.value})}/></label><div className="inspector-stat"><span>Incoming</span><b>{edges.filter((edge)=>edge.to===selectedNode.id).length}</b></div><div className="inspector-stat"><span>Outgoing</span><b>{edges.filter((edge)=>edge.from===selectedNode.id).length}</b></div><button className="danger-button" onClick={()=>{setNodes((current)=>current.filter((node)=>node.id!==selectedNode.id));setEdges((current)=>current.filter((edge)=>edge.from!==selectedNode.id&&edge.to!==selectedNode.id));setSelectedNodeId(nodes[0]?.id)}}>Remove node</button></aside>
     </div>
+    {(running||testResult)&&<section id="flow-test-output" className={`flow-test-output ${running?"is-running":""}`} aria-live="polite">
+      {running?<div className="run-progress"><span className="run-spinner"/><div><p className="eyebrow">TEST RUN IN PROGRESS</p><h3>Executing the current workflow…</h3><p>Tracing every agent decision. No live Instagram message will be sent.</p></div></div>:testResult&&<>
+        <header className="run-result-head"><div><span className="run-status">✓ Passed</span><h3>Simulation output</h3><p>Review the customer reply and every agent decision before release.</p></div><div className="run-meta"><span><small>Run</small><strong>{testResult.runId}</strong></span><span><small>Latency</small><strong>{(testResult.latency/1000).toFixed(2)}s</strong></span><span><small>Agents</small><strong>{testResult.path.length}</strong></span><span><small>Live sends</small><strong>0</strong></span></div></header>
+        <div className="run-result-grid">
+          <div className="run-conversation"><p className="eyebrow">CONVERSATION PREVIEW</p><div className="test-message customer"><span>Customer</span><p>{testResult.input}</p></div><div className="test-message agent"><span>Milana AI</span><p>{testResult.output}</p><button onClick={()=>{navigator.clipboard?.writeText(testResult.output);notify("Output copied")}}>Copy output</button></div><div className="simulation-note">Simulation only · Nothing was sent to Instagram</div></div>
+          <div className="run-trace"><p className="eyebrow">EXECUTION TRACE</p>{testResult.path.map((step,index)=><div className={`trace-step ${step.status}`} key={`${step.label}-${index}`}><i>{step.status==="passed"?"✓":"–"}</i><div><strong>{step.label}</strong><span>{step.detail}</span></div><small>{step.status}</small></div>)}</div>
+        </div>
+      </>}
+    </section>}
   </div>;
 }
 

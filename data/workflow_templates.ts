@@ -21,6 +21,7 @@ export const CURRENT_WORKFLOW_ID = "flow_current_kotiba_instagram_v1";
 export const UNIVERSAL_WORKFLOW_ID = "flow_universal_omnichannel_v1";
 export const MILANA_WEBSITE_QA_WORKFLOW_ID = "flow_milanapremium_website_qa_v1";
 export const MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID = "flow_milana_instagram_comments_v1";
+export const MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID = "flow_milana_instagram_account_learning_v1";
 
 export const currentKotibaWorkflow: WorkflowTemplate = {
   name: "Current Kotiba Instagram sales path",
@@ -182,9 +183,45 @@ export const milanaInstagramCommentsWorkflow: WorkflowTemplate = {
   ],
 };
 
+export const milanaInstagramAccountLearningWorkflow: WorkflowTemplate = {
+  name: "Milana Instagram Account Learning",
+  description: "Read-only account intelligence workflow that learns from approved Instagram posts, comments, DMs, ad referrals, catalog events, and outcomes. It redacts PII, verifies cross-channel state, and produces reviewable findings without sending messages or changing production prompts.",
+  nodes: [
+    { id:"learn_trigger", type:"trigger", label:"Instagram read-only ingestion", subtitle:"Posts · comments · DMs · ads · delivery receipts · outcomes", x:20, y:185 },
+    { id:"learn_access", type:"guardrail", label:"Read-Only Access Fence", subtitle:"No replies, reactions, deletes, labels, or account changes", x:205, y:185 },
+    { id:"learn_account", type:"agent", label:"Instagram Account Learning Agent", subtitle:"Agent 032 · Discover recurring account patterns", x:395, y:35, agentId:32 },
+    { id:"learn_history", type:"agent", label:"Conversation History Analyzer", subtitle:"Agent 017 · Review full available conversation", x:395, y:185, agentId:17 },
+    { id:"learn_external", type:"agent", label:"External Sync Agent", subtitle:"Agent 012 · Reconcile human and automation events", x:395, y:335, agentId:12 },
+    { id:"learn_event_store", type:"knowledge", label:"Normalized Account Event Store", subtitle:"Comment, DM, ad, catalog, receipt, ownership, and outcome timeline", x:590, y:185 },
+    { id:"learn_identity", type:"agent", label:"Customer Identity & Event Correlation Agent", subtitle:"Agent 033 · Join comment → DM → catalog → lead", x:785, y:35, agentId:33 },
+    { id:"learn_language", type:"agent", label:"Language & Script Lock Agent", subtitle:"Agent 034 · Uzbek Latin/Cyrillic · Russian · Kazakh", x:785, y:135, agentId:34 },
+    { id:"learn_truth", type:"agent", label:"Instagram Sales Truth Agent", subtitle:"Agent 035 · Verify MOQ, pack, price, sizes, delivery, and address", x:785, y:235, agentId:35 },
+    { id:"learn_attribution", type:"agent", label:"Advertisement & Post Context Agent", subtitle:"Agent 039 · Preserve reel, post, product, CTA, and campaign", x:785, y:335, agentId:39 },
+    { id:"learn_catalog", type:"agent", label:"Catalog Fulfillment Agent", subtitle:"Agent 036 · Select asset and verify actual delivery", x:985, y:35, agentId:36 },
+    { id:"learn_claim", type:"agent", label:"Action Claim Validator Agent", subtitle:"Agent 037 · Block “sent” claims without a receipt", x:985, y:155, agentId:37 },
+    { id:"learn_prerequisite", type:"agent", label:"Conversation Prerequisite Agent", subtitle:"Agent 038 · Enforce the correct next action", x:985, y:275, agentId:38 },
+    { id:"learn_sla", type:"agent", label:"Inbox SLA & Missed Lead Recovery Agent", subtitle:"Agent 040 · Find unanswered, failed, and overdue leads", x:1185, y:75, agentId:40 },
+    { id:"learn_privacy", type:"agent", label:"Privacy & Learning Dataset Curator Agent", subtitle:"Agent 041 · Redact PII and label approved examples", x:1185, y:255, agentId:41 },
+    { id:"learn_review", type:"guardrail", label:"Human Learning Approval", subtitle:"No prompt, routing, or production change without review", x:1385, y:165 },
+    { id:"learn_report", type:"output", label:"Account Intelligence Report", subtitle:"Patterns · failures · agent changes · eval cases · coverage gaps", x:1585, y:165 },
+    { id:"learn_audit", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Record sources and learning decisions", x:1785, y:165, agentId:11 },
+  ],
+  edges: [
+    {id:"l1",from:"learn_trigger",to:"learn_access"},
+    {id:"l2",from:"learn_access",to:"learn_account"},{id:"l3",from:"learn_access",to:"learn_history"},{id:"l4",from:"learn_access",to:"learn_external"},
+    {id:"l5",from:"learn_account",to:"learn_event_store"},{id:"l6",from:"learn_history",to:"learn_event_store"},{id:"l7",from:"learn_external",to:"learn_event_store"},
+    {id:"l8",from:"learn_event_store",to:"learn_identity"},{id:"l9",from:"learn_event_store",to:"learn_language"},{id:"l10",from:"learn_event_store",to:"learn_truth"},{id:"l11",from:"learn_event_store",to:"learn_attribution"},
+    {id:"l12",from:"learn_identity",to:"learn_catalog"},{id:"l13",from:"learn_language",to:"learn_claim"},{id:"l14",from:"learn_truth",to:"learn_claim"},{id:"l15",from:"learn_attribution",to:"learn_prerequisite"},
+    {id:"l16",from:"learn_catalog",to:"learn_sla"},{id:"l17",from:"learn_claim",to:"learn_sla"},{id:"l18",from:"learn_prerequisite",to:"learn_privacy"},
+    {id:"l19",from:"learn_sla",to:"learn_review"},{id:"l20",from:"learn_privacy",to:"learn_review"},
+    {id:"l21",from:"learn_review",to:"learn_report"},{id:"l22",from:"learn_report",to:"learn_audit"},
+  ],
+};
+
 export const workflowTemplates = {
   blank: blankWorkflow,
   universal: universalOmnichannelWorkflow,
   website: milanaWebsiteQaWorkflow,
   comments: milanaInstagramCommentsWorkflow,
+  learning: milanaInstagramAccountLearningWorkflow,
 };

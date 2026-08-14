@@ -5,8 +5,10 @@ import registryData from "@/data/agent_registry.json";
 import {
   CURRENT_WORKFLOW_ID,
   MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID,
+  MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID,
   MILANA_WEBSITE_QA_WORKFLOW_ID,
   UNIVERSAL_WORKFLOW_ID,
+  milanaInstagramAccountLearningWorkflow,
   milanaInstagramCommentsWorkflow,
   universalOmnichannelWorkflow,
   workflowTemplates,
@@ -169,20 +171,20 @@ function Overview({ agents, data, onOpen }: { agents: Agent[]; data: StudioData;
   return <div className="view overview-view">
     <section className="hero-panel"><div><span className="live-pill"><i/> Current Kotiba architecture</span><h2>Understand the full chat<br/>before every sales answer.</h2><p>The new history analyzer reviews all available conversation context before Reasoning decides what to say next.</p><div className="hero-actions"><button className="primary" onClick={onOpen}>Open current registry <span>→</span></button><button className="secondary">View architecture</button></div></div><div className="orbit" aria-label="Current Kotiba agent orchestration diagram"><div className="orbit-ring ring-one"/><div className="orbit-ring ring-two"/><div className="orbit-core"><span>1 + 16</span><small>current system</small></div>{["Intent","Memory","History","Reasoning","Follow-up","Audit"].map((x,i)=><span key={x} className={`orbit-node node-${i+1}`}>{x}</span>)}</div></section>
     <section className="metric-grid"><Metric label="Registry agents" value={String(agents.length)} detail="Shared and workflow-specific specialists" tone="violet"/><Metric label="Website Q&A" value="Draft" detail="Isolated from Kotiba production" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Live sources" value="2" detail="Website SQLite catalog · approved pages" tone="rose"/></section>
-    <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CURRENT CAPABILITY MAP</p><h3>{squads.length} groups, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>{agents.filter((agent)=>agent.squad===name).length} active components</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">CURRENT SCOPE</p><h3>Context before response</h3><div className="readiness-score"><span>17</span><small>agents</small></div><div className="progress"><i style={{width:"100%"}}/></div><ul><li className="done">Whole available chat analyzed</li><li className="done">Answered topics detected</li><li className="done">Unresolved need selected</li><li className="done">Repetitive questions blocked</li></ul></div></section>
+    <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CURRENT CAPABILITY MAP</p><h3>{squads.length} groups, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>{agents.filter((agent)=>agent.squad===name).length} active components</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">CURRENT SCOPE</p><h3>Context before response</h3><div className="readiness-score"><span>{agents.length}</span><small>registered agents</small></div><div className="progress"><i style={{width:"100%"}}/></div><ul><li className="done">Whole available chat analyzed</li><li className="done">Answered topics detected</li><li className="done">Unresolved need selected</li><li className="done">Repetitive questions blocked</li></ul></div></section>
   </div>;
 }
 
 function Metric({ label, value, detail, tone }: { label:string; value:string; detail:string; tone:string }) { return <div className={`metric-card ${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>; }
 
 function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgent }: { agents:Agent[]; query:string; setQuery:(v:string)=>void; squad:string; setSquad:(v:string)=>void; squads:string[]; chooseAgent:(a:Agent)=>void }) {
-  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">SHARED AND WORKFLOW-SPECIFIC AGENTS</p><h2>Agent Registry</h2><p>Current Kotiba agents remain intact; the MilanaPremium.uz customer-service specialists are isolated as draft agents.</p></div><button className="secondary" disabled>Production agents protected</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
+  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">SHARED AND WORKFLOW-SPECIFIC AGENTS</p><h2>Agent Registry</h2><p>Current Kotiba agents remain intact; website, comment-to-DM, and Instagram account-learning specialists are isolated as draft agents.</p></div><button className="secondary" disabled>Production agents protected</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
 }
 
 type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
 type FlowEdge = { id:string; from:string; to:string };
 type OwnershipState = "AI_ACTIVE"|"HUMAN_ACTIVE";
-type FlowTestResult = { runId:string; input:string; output:string; latency:number; ownership:{before:OwnershipState;event:string;after:OwnershipState;aiReplyAllowed:boolean;reason:string}; history:{messages:number;language:string;intent:string;resolved:string[];unresolved:string;nextAction:string}; attachment:{name:string;format:string;size:string}; followUp:{delay:string;condition:string;output:string;status:string}; commentDelivery?:{publicReply:string;publicStatus:string;privateReply:string;privateStatus:string;eligibility:string;receipt:string;recovery:string}; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
+type FlowTestResult = { runId:string; input:string; output:string; latency:number; ownership:{before:OwnershipState;event:string;after:OwnershipState;aiReplyAllowed:boolean;reason:string}; history:{messages:number;language:string;intent:string;resolved:string[];unresolved:string;nextAction:string}; attachment:{name:string;format:string;size:string}; followUp:{delay:string;condition:string;output:string;status:string}; commentDelivery?:{publicReply:string;publicStatus:string;privateReply:string;privateStatus:string;eligibility:string;receipt:string;recovery:string}; learningAudit?:{coverage:string;mode:string;languages:string[];findings:Array<{title:string;detail:string;severity:"critical"|"high"|"medium"}>; protections:string[];nextStep:string}; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
 type StoredWorkflow = { id:string; name:string; description:string; status:string; nodesJson:string; edgesJson:string; version:number; updatedAt:string };
 
 const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
@@ -190,14 +192,14 @@ const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
 ];
 
 function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=>void }) {
-  const [nodes, setNodes] = useState<FlowNode[]>(milanaInstagramCommentsWorkflow.nodes as FlowNode[]);
-  const [edges, setEdges] = useState<FlowEdge[]>(milanaInstagramCommentsWorkflow.edges);
-  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(milanaInstagramCommentsWorkflow.nodes as FlowNode[]);
-  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(milanaInstagramCommentsWorkflow.edges);
-  const [selectedNodeId, setSelectedNodeId] = useState("comment_trigger");
-  const [flowName, setFlowName] = useState(milanaInstagramCommentsWorkflow.name);
-  const [flowDescription, setFlowDescription] = useState(milanaInstagramCommentsWorkflow.description);
-  const [flowId, setFlowId] = useState<string>(MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID);
+  const [nodes, setNodes] = useState<FlowNode[]>(milanaInstagramAccountLearningWorkflow.nodes as FlowNode[]);
+  const [edges, setEdges] = useState<FlowEdge[]>(milanaInstagramAccountLearningWorkflow.edges);
+  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(milanaInstagramAccountLearningWorkflow.nodes as FlowNode[]);
+  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(milanaInstagramAccountLearningWorkflow.edges);
+  const [selectedNodeId, setSelectedNodeId] = useState("learn_trigger");
+  const [flowName, setFlowName] = useState(milanaInstagramAccountLearningWorkflow.name);
+  const [flowDescription, setFlowDescription] = useState(milanaInstagramAccountLearningWorkflow.description);
+  const [flowId, setFlowId] = useState<string>(MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID);
   const [flowStatus, setFlowStatus] = useState("draft");
   const [flowVersion, setFlowVersion] = useState(1);
   const [workflows, setWorkflows] = useState<StoredWorkflow[]>([]);
@@ -231,7 +233,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     if(next)loadWorkflow(next);
   };
 
-  useEffect(()=>{refreshWorkflows(MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
+  useEffect(()=>{refreshWorkflows(MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
 
   useEffect(()=>{
     if (!drag) return;
@@ -284,11 +286,33 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
       const humanOwned=simulatedOwnership==="HUMAN_ACTIVE";
       const websiteFlow=flowId===MILANA_WEBSITE_QA_WORKFLOW_ID;
       const commentFlow=flowId===MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID;
-      const path=nodes.filter((node)=>node.type==="agent"||node.id==="tool_catalog"||node.id==="ownership_gate"||node.type==="knowledge"||node.id==="web_customer_data"||node.id==="comment_dedupe"||node.id==="comment_dm_gate").map((node)=>({
+      const learningFlow=flowId===MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID;
+      const path=nodes.filter((node)=>learningFlow||node.type==="agent"||node.id==="tool_catalog"||node.id==="ownership_gate"||node.type==="knowledge"||node.id==="web_customer_data"||node.id==="comment_dedupe"||node.id==="comment_dm_gate").map((node)=>({
         label:node.label,
         detail:node.id==="ownership_gate"?(humanOwned?"Detected a non-AI outbound message; AI and pending follow-ups are blocked until explicit resume":"Ownership is AI_ACTIVE; workflow may continue"):humanOwned?"Skipped because the conversation is HUMAN_ACTIVE":node.id==="comment_dedupe"?"Webhook signature accepted; comment ID and private-reply idempotency key are new":node.id==="comment_post_context"?"Loaded the originating reel, caption, TJ-2026 product facts, and approved catalog":node.agentId===26?"Detected Uzbek price + catalog intent and requested public reply plus private reply":node.agentId===27?"Removed private order details and approved a short public acknowledgement":node.agentId===28?"Composed the public response in the commenter's current language":node.agentId===29?"Confirmed professional account, permission, allowed window, no duplicate, no opt-out, and AI ownership":node.id==="comment_dm_gate"?"Private reply is eligible; continue with the originating comment ID":node.agentId===30?"Submitted one idempotent private reply and retained the Meta API response":node.agentId===31?"Verified the accepted message ID; public and private delivery states are both complete":node.id==="web_catalog"?"Queried the live SQLite catalog and filtered to active products":node.id==="web_policy"?"Loaded approved ordering, support, terms, privacy, and partnership content":node.id==="web_customer_data"?"No customer-private data requested; authenticated scope stayed closed":node.agentId===25?"Compared the answer against source precedence and blocked stale policy claims":node.agentId===18?"Selected only catalog retrieval, stock/pack/price, and response composition":node.agentId===19?"Found model TJ-2182 / V-4607 in the active website catalog":node.agentId===20?"Verified $7.30 unit price, sizes 46–54, pack of 5, and tracked bag availability":node.agentId===21?"Skipped because the customer asked about a known model":node.agentId===22?"Skipped because no policy question was asked":node.agentId===23?"Skipped because no authenticated order or account operation was requested":node.agentId===24?"Composed a concise Uzbek answer with a product card and no unsupported guarantees":node.agentId===1?"Selected the catalog-delivery sales path":node.agentId===2?"Detected an Uzbek product and price request":node.agentId===6?(commentFlow?"Linked the public comment and verified private reply to one customer journey":"Loaded customer identity and saved preferences"):node.agentId===17?(commentFlow?"Reviewed prior comments, DMs, language, ownership, and duplicate-send state":"Reviewed the full available session and found an unresolved product question"):node.agentId===8?"Used history analysis to choose immediate catalog delivery without repeating questions":node.id==="tool_catalog"?"Attached the current approved Milana Premium catalog":node.agentId===10?(commentFlow?"Skipped because delivery succeeded and no sensitive handoff is required":"No manager handoff required"):node.agentId===11?(commentFlow?"Recorded public reply ID, private message receipt, eligibility decision, and final state":"Recorded the simulated decision, sources, and result"):node.agentId===16?"Scheduled one follow-up for +5 minutes; cancel on any customer reply":"Completed its assigned workflow step",
         status:(node.id==="ownership_gate"?"passed":humanOwned||node.agentId===10?"skipped":"passed") as "passed"|"skipped",
       }));
+      const learningDetails:Record<string,string>={
+        "Instagram read-only ingestion":"Loaded the approved profile, post, comment, DM, ad-referral, catalog, receipt, ownership, and outcome sample.",
+        "Read-Only Access Fence":"Enforced zero-send mode: no replies, reactions, labels, deletes, or account changes.",
+        "Instagram Account Learning Agent":"Clustered recurring customer intents, response failures, and successful human examples.",
+        "Conversation History Analyzer":"Reviewed each complete available thread before extracting a learning example.",
+        "External Sync Agent":"Separated human and automated outbound events before assigning ownership.",
+        "Normalized Account Event Store":"Created one normalized timeline for comments, DMs, ads, catalogs, receipts, and outcomes.",
+        "Customer Identity & Event Correlation Agent":"Joined comment, customer identity, private reply, DM thread, catalog receipt, ad referral, and lead state.",
+        "Language & Script Lock Agent":"Detected Uzbek Latin, Uzbek Cyrillic, Russian, and Kazakh continuity failures.",
+        "Instagram Sales Truth Agent":"Flagged unsupported MOQ, pack, price, size, delivery, and address claims for verification.",
+        "Advertisement & Post Context Agent":"Attached the originating reel, post, product, CTA, and campaign to each journey.",
+        "Catalog Fulfillment Agent":"Separated catalog requested, selected, dispatched, accepted, and delivered states.",
+        "Action Claim Validator Agent":"Blocked “sent by DM” claims when no matching delivery receipt exists.",
+        "Conversation Prerequisite Agent":"Flagged phone requests and follow-ups that skipped unresolved catalog or product questions.",
+        "Inbox SLA & Missed Lead Recovery Agent":"Created a review queue for unread questions, failed sends, and overdue leads.",
+        "Privacy & Learning Dataset Curator Agent":"Redacted phone numbers and personal data, then labeled examples for approval.",
+        "Human Learning Approval":"Held every prompt and routing change for explicit human approval.",
+        "Account Intelligence Report":"Produced sanitized findings, evaluation cases, agent changes, and coverage gaps.",
+        "Audit Log Agent":"Recorded source coverage, redaction decisions, findings, and approval state.",
+      };
+      const learningPath=path.map((step)=>({...step,detail:learningDetails[step.label]||step.detail,status:"passed" as const}));
       setTestResult({
         runId:`SIM-${Date.now().toString().slice(-6)}`,
         input:commentFlow?"TJ-2026 narxi qancha? Katalogni Direktga yuboring.":websiteFlow?"Salom, TJ-2182 narxi, razmerlari va eng kam buyurtmasi qancha?":"Salom, yangi katalogni yubora olasizmi?",
@@ -298,10 +322,37 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
         attachment:humanOwned?{name:"Output suppressed",format:"No attachment",size:"Human-owned conversation"}:commentFlow?{name:"Meta private reply receipt",format:"Instagram message ID",size:"Verified in simulation"}:websiteFlow?{name:"TJ-2182 · V-4607",format:"Website product card",size:"Live catalog result"}:{name:"Milana Premium — Latest Catalog.pdf",format:"PDF catalog",size:"Simulation attachment"},
         followUp:humanOwned?{delay:"Not scheduled",condition:"Human takeover cancels pending automation",output:"No follow-up will be sent while the conversation is human-owned.",status:"Cancelled"}:commentFlow?{delay:"Wait for customer reply",condition:"Do not send another automated DM until the customer responds and messaging policy allows it",output:"The private reply opens the conversation; further automation stays paused until the customer replies.",status:"Policy gated"}:websiteFlow?{delay:"Not scheduled",condition:"Website Q&A sends no unsolicited follow-up by default",output:"The customer can continue in the same website session or request a manager.",status:"Cancelled"}:{delay:"5 minutes after catalog",condition:"Send only if no customer reply, handoff, opt-out, or order activity",output:"Katalogni ko‘rib chiqishga ulgurdingizmi? Sizga yoqqan modelning rasmi yoki artikulini yuborsangiz, narxi va buyurtma shartlarini tekshirib beraman.",status:"Scheduled"},
         commentDelivery:commentFlow?{publicReply:humanOwned?"Suppressed — human owns the conversation":"Assalomu alaykum! TJ-2026 bo‘yicha narx va katalogni Direktga yubordik 😊",publicStatus:humanOwned?"Blocked":"Published · reply ID stored",privateReply:humanOwned?"Suppressed — human owns the conversation":"Salom! TJ-2026 modelining tasdiqlangan narxi va yangi katalog shu yerda. Sizga kerakli son va o‘lchamlarni yozsangiz, buyurtma shartlarini tekshirib beramiz.",privateStatus:humanOwned?"Blocked":"Accepted · message ID verified",eligibility:humanOwned?"Ineligible while HUMAN_ACTIVE":"Eligible · sales intent · allowed window · no duplicate",receipt:humanOwned?"No API call":"mid.simulated_comment_private_reply_8421",recovery:humanOwned?"Return to AI or let the operator respond":"Not required"}:undefined,
+        ...(learningFlow?{
+          input:"Read-only audit: learn from posts, comments, DMs, ad referrals, catalog receipts, ownership, and outcomes.",
+          output:"Account intelligence report ready for human review. No Instagram action or production prompt change was performed.",
+          ownership:{before:simulatedOwnership,event:"Read-only account ingestion",after:simulatedOwnership,aiReplyAllowed:true,reason:"Learning may inspect approved history, but it cannot send messages or change prompts automatically."},
+          history:{messages:36,language:"Multilingual account sample",intent:"Build an approved account-learning dataset",resolved:["Profile and channel context loaded","Human and AI events separated","No live-send permission"],unresolved:"Complete historical coverage requires Meta API backfill and ongoing webhooks",nextAction:"Review the sanitized findings, approve the evaluation set, then connect read-only ingestion"},
+          attachment:{name:"Milana Instagram Intelligence Report",format:"Sanitized review artifact",size:"5 findings · 4 language groups"},
+          followUp:{delay:"Not scheduled",condition:"Learning never triggers customer outreach",output:"Findings remain in the review queue until a human approves prompt, routing, or evaluation changes.",status:"Approval gated"},
+          learningAudit:{
+            coverage:"Profile · 177 posts · recent comments · Primary/General/From Ads/Requests sample",
+            mode:"Read-only · 0 sends · 0 automatic prompt changes",
+            languages:["Uzbek Latin","Uzbek Cyrillic","Russian","Kazakh"],
+            findings:[
+              {title:"False DM completion claims",detail:"Public replies can say a DM or catalog was sent before a matching delivery receipt exists.",severity:"critical" as const},
+              {title:"Catalog intent is lost",detail:"A catalog request can become a generic phone-number request instead of verified catalog fulfillment.",severity:"high" as const},
+              {title:"Language and script drift",detail:"Kazakh and Russian customers can receive Uzbek or English templates that ignore the full conversation.",severity:"high" as const},
+              {title:"Prerequisites are skipped",detail:"Follow-ups can ask whether a catalog was reviewed without confirmed catalog delivery.",severity:"high" as const},
+              {title:"Missed lead queue",detail:"Unread location, size, and product questions need SLA monitoring and recovery.",severity:"medium" as const},
+            ],
+            protections:["Phone numbers and PII redacted","Human and AI events separated","Learning examples require approval","Kotiba production untouched"],
+            nextStep:"Connect Meta read-only backfill and webhooks, then run the sanitized evaluation set before enabling any send action.",
+          },
+        }:{}),
         latency:1840,
-        path,
+        path:learningFlow?learningPath:path,
       });
       setRunning(false);
+      if(learningFlow){
+        notify("Account-learning simulation completed — findings are ready for review");
+        window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
+        return;
+      }
       notify(humanOwned?"Flow simulation completed — AI correctly suppressed":commentFlow?"Comment-to-DM simulation completed — both delivery states are visible":websiteFlow?"Website Q&A simulation completed — grounded output is ready":"Flow simulation completed — output is ready");
       window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
     },2200);
@@ -314,7 +365,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
     {locked&&<div className="workflow-lock-note"><span>🔒</span><div><strong>This workflow is preserved exactly as it was.</strong><p>Testing is allowed, but editing and overwriting are blocked. Use Create new workflow for changes.</p></div></div>}
     <section className={`ownership-simulator ${simulatedOwnership==="HUMAN_ACTIVE"?"human":"ai"}`}><div><p className="eyebrow">CONVERSATION OWNERSHIP TEST</p><strong>{simulatedOwnership==="AI_ACTIVE"?"AI owns the conversation":"Human owns the conversation"}</strong><span>{simulatedOwnership==="AI_ACTIVE"?"AI replies and catalog follow-ups are allowed.":"AI replies and pending follow-ups must remain blocked."}</span></div><div><button className={simulatedOwnership==="AI_ACTIVE"?"active":""} onClick={()=>setSimulatedOwnership("AI_ACTIVE")}>Return to AI</button><button className={simulatedOwnership==="HUMAN_ACTIVE"?"active":""} onClick={()=>setSimulatedOwnership("HUMAN_ACTIVE")}>Simulate human reply</button></div></section>
     <div className="flow-layout">
-      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} disabled={locked} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?"Choose from 17 current agents":item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
+      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} disabled={locked} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?`Choose from ${agents.length} registered agents`:item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
       <section className={`flow-canvas ${locked?"is-locked":""}`} aria-label="Visual agent workflow canvas">
         <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button disabled={locked} onClick={()=>{setNodes(savedNodes);setEdges(savedEdges);setSelectedNodeId(savedNodes[0]?.id||"")}}>Reset</button></div>
         <svg className="flow-connections" aria-hidden="true" width="2250" height="610" viewBox="0 0 2250 610">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>
@@ -331,12 +382,18 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
             <div className={`ownership-result ${testResult.ownership.aiReplyAllowed?"ai":"human"}`}><header><div><span>OWNERSHIP GATE</span><strong>{testResult.ownership.after}</strong></div><b>{testResult.ownership.aiReplyAllowed?"AI allowed":"AI blocked"}</b></header><p>{testResult.ownership.reason}</p><small>Event: {testResult.ownership.event} · Previous: {testResult.ownership.before}</small></div>
             <div className="history-analysis"><header><div><span>HISTORY ANALYZER</span><strong>{testResult.history.messages} messages reviewed</strong></div><b>Complete</b></header><div className="history-facts"><span><small>Language</small><strong>{testResult.history.language}</strong></span><span><small>Current intent</small><strong>{testResult.history.intent}</strong></span></div><p><b>Resolved:</b> {testResult.history.resolved.join(" · ")}</p><p><b>Unresolved:</b> {testResult.history.unresolved}</p><footer><span>Recommended next action</span><strong>{testResult.history.nextAction}</strong></footer></div>
             <div className="test-message customer"><span>Customer comment</span><p>{testResult.input}</p></div>
-            {testResult.commentDelivery ? <div className="comment-delivery-grid">
+            {testResult.learningAudit ? <section className="learning-audit-result">
+              <header><div><span>ACCOUNT LEARNING REPORT</span><strong>{testResult.learningAudit.coverage}</strong></div><b>{testResult.learningAudit.mode}</b></header>
+              <div className="learning-language-row">{testResult.learningAudit.languages.map((language)=><span key={language}>{language}</span>)}</div>
+              <div className="learning-findings">{testResult.learningAudit.findings.map((finding)=><article key={finding.title} className={finding.severity}><div><b>{finding.severity}</b><strong>{finding.title}</strong></div><p>{finding.detail}</p></article>)}</div>
+              <div className="learning-protections">{testResult.learningAudit.protections.map((protection)=><span key={protection}>✓ {protection}</span>)}</div>
+              <footer><span>SAFE NEXT STEP</span><strong>{testResult.learningAudit.nextStep}</strong></footer>
+            </section> : testResult.commentDelivery ? <div className="comment-delivery-grid">
               <article className="delivery-card public"><header><span>PUBLIC COMMENT</span><b>{testResult.commentDelivery.publicStatus}</b></header><p>{testResult.commentDelivery.publicReply}</p><small>Public and private sends have independent status.</small></article>
               <article className="delivery-card private"><header><span>PRIVATE REPLY / DM</span><b>{testResult.commentDelivery.privateStatus}</b></header><p>{testResult.commentDelivery.privateReply}</p><dl><div><dt>Eligibility</dt><dd>{testResult.commentDelivery.eligibility}</dd></div><div><dt>Receipt</dt><dd>{testResult.commentDelivery.receipt}</dd></div><div><dt>Recovery</dt><dd>{testResult.commentDelivery.recovery}</dd></div></dl></article>
             </div> : testResult.ownership.aiReplyAllowed ? <div className="test-message agent"><span>Milana AI</span><p>{testResult.output}</p><div className="catalog-attachment"><i>PDF</i><div><strong>{testResult.attachment.name}</strong><span>{testResult.attachment.format} · {testResult.attachment.size}</span></div><b>Attached ✓</b></div><button onClick={()=>{navigator.clipboard?.writeText(testResult.output);notify("Output copied")}}>Copy output</button></div> : <div className="test-message suppressed"><span>Milana AI</span><strong>No reply generated</strong><p>The customer message remains visible to the human operator. Automation resumes only after an approved Return to AI action.</p></div>}
-            <div className={`followup-preview ${testResult.followUp.status==="Cancelled"?"cancelled":""}`}><header><div><span>{testResult.commentDelivery?"MESSAGING POLICY":"FOLLOW-UP AGENT"}</span><strong>{testResult.followUp.delay}</strong></div><b>{testResult.followUp.status}</b></header><p>{testResult.followUp.output}</p><small>✓ {testResult.followUp.condition}</small></div>
-            <div className="simulation-note">Simulation only · Public reply, private-reply eligibility, API receipt, ownership, and recovery behavior are previewed; nothing was sent to Instagram</div>
+            <div className={`followup-preview ${testResult.followUp.status==="Cancelled"?"cancelled":""}`}><header><div><span>{testResult.learningAudit?"LEARNING SAFETY":testResult.commentDelivery?"MESSAGING POLICY":"FOLLOW-UP AGENT"}</span><strong>{testResult.followUp.delay}</strong></div><b>{testResult.followUp.status}</b></header><p>{testResult.followUp.output}</p><small>✓ {testResult.followUp.condition}</small></div>
+            <div className="simulation-note">Simulation only · {testResult.learningAudit?"Account coverage, sanitized findings, approval gates, and recommended integrations are previewed":"Public reply, private-reply eligibility, API receipt, ownership, and recovery behavior are previewed"}; nothing was sent to Instagram</div>
           </div>
           <div className="run-trace"><p className="eyebrow">EXECUTION TRACE</p>{testResult.path.map((step,index)=><div className={`trace-step ${step.status}`} key={`${step.label}-${index}`}><i>{step.status==="passed"?"✓":"–"}</i><div><strong>{step.label}</strong><span>{step.detail}</span></div><small>{step.status}</small></div>)}</div>
         </div>
@@ -346,6 +403,7 @@ function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=
       ["universal","Universal omnichannel","Website, bots, API, automations, ChatGPT, Claude, and MCP"],
       ["website","Website Q&A","Grounded answers from approved pages, files, and business facts"],
       ["comments","Instagram Comments → DM","Public replies, private-reply eligibility, verified DM delivery, and recovery"],
+      ["learning","Instagram Account Learning","Read-only account ingestion, cross-channel correlation, sanitized findings, and human approval"],
       ["blank","Blank canvas","A simple input → agent selector → output foundation"],
     ] as const).map(([id,title,description])=><label key={id} className={createTemplate===id?"selected":""}><input type="radio" name="workflow-template" checked={createTemplate===id} onChange={()=>{setCreateTemplate(id);setCreateName(workflowTemplates[id].name)}}/><span><strong>{title}</strong><small>{description}</small></span></label>)}</div></fieldset><footer><button className="secondary" onClick={()=>setCreateOpen(false)}>Cancel</button><button className="primary" onClick={createWorkflow}>Create draft workflow</button></footer></section></div>}
   </div>;

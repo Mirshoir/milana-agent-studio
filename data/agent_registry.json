@@ -308,5 +308,105 @@
     "activation": "After every private-reply attempt",
     "status": "Draft",
     "surface": "Instagram Comments"
+  },
+  {
+    "id": 32,
+    "squad": "Instagram Account Intelligence",
+    "wave": "Account learning draft",
+    "agent": "Instagram Account Learning Agent",
+    "purpose": "Learns approved recurring patterns from Instagram posts, captions, comments, DMs, ad referrals, human answers, catalog events, and conversation outcomes without sending messages or promoting changes automatically.",
+    "activation": "Async or scheduled",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 33,
+    "squad": "Instagram Account Intelligence",
+    "wave": "Account learning draft",
+    "agent": "Customer Identity & Event Correlation Agent",
+    "purpose": "Links a customer comment, Instagram identity, private reply, DM thread, advertisement, catalog receipt, human action, and CRM lead into one verified journey.",
+    "activation": "Every account event",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 34,
+    "squad": "Instagram Language Quality",
+    "wave": "Account learning draft",
+    "agent": "Language & Script Lock Agent",
+    "purpose": "Detects the customer’s language and script from the full conversation, locks the outbound language, and flags Uzbek Latin, Uzbek Cyrillic, Russian, Kazakh, and mixed-language continuity failures.",
+    "activation": "Every Instagram turn",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 35,
+    "squad": "Instagram Commerce Grounding",
+    "wave": "Account learning draft",
+    "agent": "Instagram Sales Truth Agent",
+    "purpose": "Resolves MOQ, pack composition, price, sizes, stock, delivery, address, payment, and ordering facts from approved sources and blocks unsupported commercial claims.",
+    "activation": "Before commercial claims",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 36,
+    "squad": "Instagram Catalog Operations",
+    "wave": "Account learning draft",
+    "agent": "Catalog Fulfillment Agent",
+    "purpose": "Selects the correct approved catalog asset for the customer’s language, market, product interest, and campaign, then records the asset and actual delivery receipt.",
+    "activation": "Catalog request path",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 37,
+    "squad": "Instagram Action Integrity",
+    "wave": "Account learning draft",
+    "agent": "Action Claim Validator Agent",
+    "purpose": "Prevents public or private responses from claiming that a DM, catalog, call, handoff, or manager action occurred until the corresponding verified receipt exists.",
+    "activation": "Before action claims",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 38,
+    "squad": "Instagram Action Integrity",
+    "wave": "Account learning draft",
+    "agent": "Conversation Prerequisite Agent",
+    "purpose": "Enforces the correct next action from verified conversation state, including no catalog follow-up before delivery, no repeated phone request, and no greeting reset during an active discussion.",
+    "activation": "Before next-action selection",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 39,
+    "squad": "Instagram Attribution",
+    "wave": "Account learning draft",
+    "agent": "Advertisement & Post Context Agent",
+    "purpose": "Attaches the originating post, reel, product, caption, call-to-action, advertisement, and campaign context to every comment and DM decision.",
+    "activation": "Comment or ad referral",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 40,
+    "squad": "Instagram Lead Operations",
+    "wave": "Account learning draft",
+    "agent": "Inbox SLA & Missed Lead Recovery Agent",
+    "purpose": "Finds unanswered questions, unread replies, failed DMs, overdue follow-ups, false delivery claims, and conversations needing one safe retry or manager attention.",
+    "activation": "Async or scheduled",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
+  },
+  {
+    "id": 41,
+    "squad": "Learning & Privacy",
+    "wave": "Account learning draft",
+    "agent": "Privacy & Learning Dataset Curator Agent",
+    "purpose": "Redacts phone numbers and other personal information, labels successful and failed examples, records source consent, and submits learning candidates for human approval.",
+    "activation": "Before learning storage",
+    "status": "Draft",
+    "surface": "Instagram Intelligence"
   }
 ]

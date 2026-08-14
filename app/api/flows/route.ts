@@ -4,9 +4,11 @@ import { ensureStudioSchema } from "@/db/raw";
 import { workflowDefinitions } from "@/db/schema";
 import {
   CURRENT_WORKFLOW_ID,
+  MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID,
   MILANA_WEBSITE_QA_WORKFLOW_ID,
   UNIVERSAL_WORKFLOW_ID,
   currentKotibaWorkflow,
+  milanaInstagramCommentsWorkflow,
   milanaWebsiteQaWorkflow,
   universalOmnichannelWorkflow,
 } from "@/data/workflow_templates";
@@ -40,6 +42,16 @@ async function ensureDefaultWorkflows() {
       description: milanaWebsiteQaWorkflow.description,
       nodesJson: JSON.stringify(milanaWebsiteQaWorkflow.nodes),
       edgesJson: JSON.stringify(milanaWebsiteQaWorkflow.edges),
+      status: "draft",
+      version: 1,
+      updatedAt: now,
+    },
+    {
+      id: MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID,
+      name: milanaInstagramCommentsWorkflow.name,
+      description: milanaInstagramCommentsWorkflow.description,
+      nodesJson: JSON.stringify(milanaInstagramCommentsWorkflow.nodes),
+      edgesJson: JSON.stringify(milanaInstagramCommentsWorkflow.edges),
       status: "draft",
       version: 1,
       updatedAt: now,

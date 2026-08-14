@@ -248,5 +248,65 @@
     "activation": "Core fast path",
     "status": "Draft",
     "surface": "Website"
+  },
+  {
+    "id": 26,
+    "squad": "Instagram Comments",
+    "wave": "Comments workflow draft",
+    "agent": "Comment Context & Intent Agent",
+    "purpose": "Understands the comment together with its post or reel, detects the commenter’s current language and sales intent, and decides whether public-only help, a private reply, moderation, or human review is appropriate.",
+    "activation": "Every Instagram comment",
+    "status": "Draft",
+    "surface": "Instagram Comments"
+  },
+  {
+    "id": 27,
+    "squad": "Instagram Comments",
+    "wave": "Comments workflow draft",
+    "agent": "Public Comment Safety Agent",
+    "purpose": "Protects the public channel by blocking personal-data requests, payment details, unsupported commercial claims, private order information, spam amplification, and unsafe moderation actions.",
+    "activation": "Before every public reply",
+    "status": "Draft",
+    "surface": "Instagram Comments"
+  },
+  {
+    "id": 28,
+    "squad": "Instagram Comments",
+    "wave": "Comments workflow draft",
+    "agent": "Public Reply Composer Agent",
+    "purpose": "Writes a short, useful public reply in the commenter’s current language, answers only safe public facts, and clearly tells the customer when verified details were sent privately.",
+    "activation": "Public reply path",
+    "status": "Draft",
+    "surface": "Instagram Comments"
+  },
+  {
+    "id": 29,
+    "squad": "Instagram Private Replies",
+    "wave": "Comments workflow draft",
+    "agent": "Private Reply Eligibility Agent",
+    "purpose": "Checks sales relevance, platform permissions and timing, duplicate-send state, conversation ownership, opt-out and prior private-reply history before authorizing a comment-triggered DM.",
+    "activation": "When a comment may require private help",
+    "status": "Draft",
+    "surface": "Instagram Comments"
+  },
+  {
+    "id": 30,
+    "squad": "Instagram Private Replies",
+    "wave": "Comments workflow draft",
+    "agent": "Instagram Private Reply Dispatcher",
+    "purpose": "Sends the approved private reply using the originating comment ID, applies idempotency, and stores the exact Meta request result instead of assuming delivery from the public reply outcome.",
+    "activation": "Eligible private reply path",
+    "status": "Draft",
+    "surface": "Instagram Comments"
+  },
+  {
+    "id": 31,
+    "squad": "Instagram Private Replies",
+    "wave": "Comments workflow draft",
+    "agent": "DM Delivery Verification Agent",
+    "purpose": "Validates the private-reply API receipt and message ID, classifies permission, eligibility, rate-limit and transient failures, then confirms delivery or creates one safe retry and an operator task.",
+    "activation": "After every private-reply attempt",
+    "status": "Draft",
+    "surface": "Instagram Comments"
   }
 ]

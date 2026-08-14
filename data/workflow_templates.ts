@@ -20,6 +20,7 @@ export type WorkflowTemplate = {
 export const CURRENT_WORKFLOW_ID = "flow_current_kotiba_instagram_v1";
 export const UNIVERSAL_WORKFLOW_ID = "flow_universal_omnichannel_v1";
 export const MILANA_WEBSITE_QA_WORKFLOW_ID = "flow_milanapremium_website_qa_v1";
+export const MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID = "flow_milana_instagram_comments_v1";
 
 export const currentKotibaWorkflow: WorkflowTemplate = {
   name: "Current Kotiba Instagram sales path",
@@ -147,8 +148,43 @@ export const websiteQaWorkflow: WorkflowTemplate = {
   ],
 };
 
+export const milanaInstagramCommentsWorkflow: WorkflowTemplate = {
+  name: "Milana Instagram Comments → DM",
+  description: "Sandbox workflow for safe public comment replies and verified private replies. Public and DM delivery are tracked independently; failed or ineligible DMs create a recovery action instead of being silently treated as sent.",
+  nodes: [
+    { id:"comment_trigger", type:"trigger", label:"Instagram comment webhook", subtitle:"Comment ID · user · media/post context · timestamp", x:20, y:185 },
+    { id:"comment_dedupe", type:"guardrail", label:"Event & Duplicate Guard", subtitle:"Verify webhook, deduplicate comment and prior private reply", x:205, y:185 },
+    { id:"comment_post_context", type:"knowledge", label:"Post & Product Context", subtitle:"Caption · reel/media · linked catalog product · approved facts", x:395, y:35 },
+    { id:"comment_history", type:"agent", label:"Conversation History Analyzer", subtitle:"Agent 017 · Review prior comments, DMs, ownership, and language", x:395, y:185, agentId:17 },
+    { id:"comment_intent", type:"agent", label:"Comment Context & Intent Agent", subtitle:"Agent 026 · Detect sales intent, language, risk, and DM need", x:395, y:335, agentId:26 },
+    { id:"comment_router", type:"router", label:"Public / Private Action Router", subtitle:"Choose public-only, public + private reply, hide, or human review", x:595, y:185 },
+    { id:"comment_public_safety", type:"agent", label:"Public Comment Safety Agent", subtitle:"Agent 027 · Block PII, private terms, unsupported claims, and spam", x:790, y:35, agentId:27 },
+    { id:"comment_public_composer", type:"agent", label:"Public Reply Composer Agent", subtitle:"Agent 028 · Short reply in the commenter's current language", x:985, y:35, agentId:28 },
+    { id:"comment_public_output", type:"output", label:"Publish comment reply", subtitle:"Store public reply ID and independent delivery status", x:1180, y:35 },
+    { id:"comment_dm_eligibility", type:"agent", label:"Private Reply Eligibility Agent", subtitle:"Agent 029 · Permission, time window, duplicate, ownership, and intent", x:790, y:215, agentId:29 },
+    { id:"comment_dm_gate", type:"condition", label:"Private reply allowed?", subtitle:"Eligible sales lead and no prior private reply", x:985, y:215 },
+    { id:"comment_dm_dispatch", type:"agent", label:"Instagram Private Reply Dispatcher", subtitle:"Agent 030 · Send by comment ID and retain Meta receipt", x:1180, y:215, agentId:30 },
+    { id:"comment_dm_verify", type:"agent", label:"DM Delivery Verification Agent", subtitle:"Agent 031 · Confirm accepted message ID or classify failure", x:1375, y:215, agentId:31 },
+    { id:"comment_dm_output", type:"output", label:"Private reply delivered", subtitle:"Open/continue customer DM only after verified acceptance", x:1570, y:145 },
+    { id:"comment_recovery", type:"output", label:"Retry or operator task", subtitle:"One safe retry for transient errors; otherwise human queue", x:1570, y:315 },
+    { id:"comment_memory", type:"agent", label:"Customer Memory Agent", subtitle:"Agent 006 · Join comment and DM into one customer journey", x:1765, y:145, agentId:6 },
+    { id:"comment_handoff", type:"agent", label:"Handoff Agent", subtitle:"Agent 010 · Complaints, sensitive cases, and unresolved failures", x:1765, y:315, agentId:10 },
+    { id:"comment_audit", type:"agent", label:"Audit Log Agent", subtitle:"Agent 011 · Record both sends, receipts, retries, and final state", x:1960, y:215, agentId:11 },
+  ],
+  edges: [
+    {id:"c1",from:"comment_trigger",to:"comment_dedupe"},
+    {id:"c2",from:"comment_dedupe",to:"comment_post_context"},{id:"c3",from:"comment_dedupe",to:"comment_history"},{id:"c4",from:"comment_dedupe",to:"comment_intent"},
+    {id:"c5",from:"comment_post_context",to:"comment_router"},{id:"c6",from:"comment_history",to:"comment_router"},{id:"c7",from:"comment_intent",to:"comment_router"},
+    {id:"c8",from:"comment_router",to:"comment_public_safety"},{id:"c9",from:"comment_public_safety",to:"comment_public_composer"},{id:"c10",from:"comment_public_composer",to:"comment_public_output"},
+    {id:"c11",from:"comment_router",to:"comment_dm_eligibility"},{id:"c12",from:"comment_dm_eligibility",to:"comment_dm_gate"},{id:"c13",from:"comment_dm_gate",to:"comment_dm_dispatch"},{id:"c14",from:"comment_dm_dispatch",to:"comment_dm_verify"},
+    {id:"c15",from:"comment_dm_verify",to:"comment_dm_output"},{id:"c16",from:"comment_dm_verify",to:"comment_recovery"},
+    {id:"c17",from:"comment_dm_output",to:"comment_memory"},{id:"c18",from:"comment_recovery",to:"comment_handoff"},{id:"c19",from:"comment_memory",to:"comment_audit"},{id:"c20",from:"comment_handoff",to:"comment_audit"},{id:"c21",from:"comment_public_output",to:"comment_audit"},
+  ],
+};
+
 export const workflowTemplates = {
   blank: blankWorkflow,
   universal: universalOmnichannelWorkflow,
   website: milanaWebsiteQaWorkflow,
+  comments: milanaInstagramCommentsWorkflow,
 };

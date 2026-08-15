@@ -90,6 +90,10 @@ export async function POST(request: Request) {
       const agentId = String(body.agentId ?? "");
       if (!promptVersionId || !agentId) return Response.json({ error: "Save a prompt version before promotion." }, { status: 400 });
       const environment = String(body.environment ?? "staging");
+      if (environment === "production") return Response.json({ error: "Direct production promotion is disabled. Promote to staging, complete the regression suite, then use the controlled backend release process." }, { status: 409 });
+      const evidence = await db.select().from(evalRuns).where(eq(evalRuns.promptVersionId, promptVersionId)).orderBy(desc(evalRuns.createdAt)).limit(20);
+      const passingEvidence = evidence.find((run) => run.status === "pass" && run.groundedScore >= .9 && run.languageScore >= .9 && run.salesScore >= .9 && run.safetyScore === 1 && run.latencyMs < 10000);
+      if (!passingEvidence) return Response.json({ error: "Promotion blocked: this exact prompt version needs a passing grounded, language, sales, safety, and latency check." }, { status: 409 });
       await db.batch([
         db.update(promptVersions).set({ status: environment === "production" ? "production" : "approved" }).where(eq(promptVersions.id, promptVersionId)),
         db.update(agentProfiles).set({ status: environment === "production" ? "production" : "approved", activeVersionId: promptVersionId, updatedAt: now() }).where(eq(agentProfiles.id, agentId)),

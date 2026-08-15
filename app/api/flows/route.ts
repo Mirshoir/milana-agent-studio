@@ -75,7 +75,21 @@ export async function GET() {
   await ensureStudioSchema();
   await ensureDefaultWorkflows();
   const workflows = await getDb().select().from(workflowDefinitions).orderBy(desc(workflowDefinitions.updatedAt)).limit(50);
-  return Response.json({ workflows });
+  const legacyDuplicates = workflows.filter((workflow) => {
+    if (workflow.id === CURRENT_WORKFLOW_ID || workflow.status !== "draft" || workflow.name !== currentKotibaWorkflow.name) return false;
+    try {
+      const nodes = JSON.parse(workflow.nodesJson) as Array<{ id?: string; label?: string; agentId?: number }>;
+      const hasHistory = nodes.some((node) => node.agentId === 17);
+      const hasOwnership = nodes.some((node) => /ownership/i.test(`${node.id || ""} ${node.label || ""}`));
+      return !hasHistory || !hasOwnership;
+    } catch {
+      return true;
+    }
+  });
+  for (const duplicate of legacyDuplicates) {
+    await getDb().update(workflowDefinitions).set({ status: "archived", updatedAt: new Date().toISOString() }).where(eq(workflowDefinitions.id, duplicate.id));
+  }
+  return Response.json({ workflows: workflows.filter((workflow) => workflow.status !== "archived"), archivedLegacyDuplicates: legacyDuplicates.length });
 }
 
 export async function POST(request: Request) {

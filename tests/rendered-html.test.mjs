@@ -10,6 +10,15 @@ async function render() {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
+async function callApi(path, body) {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("api-test", `${process.pid}-${Date.now()}-${Math.random()}`);
+  const { default: worker } = await import(workerUrl.href);
+  return worker.fetch(new Request(`http://localhost${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), {
+    ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+  }, { waitUntil() {}, passThroughOnException() {} });
+}
+
 test("server-renders Milana Agent Studio", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -21,4 +30,38 @@ test("server-renders Milana Agent Studio", async () => {
   assert.match(html, /Isolated from Kotiba production/);
   assert.match(html, /Current Kotiba architecture/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("graph runner executes only a structurally valid graph", async () => {
+  const response = await callApi("/api/flow-test", {
+    nodes: [
+      { id: "start", type: "trigger", label: "Inbound", subtitle: "Test" },
+      { id: "finish", type: "output", label: "Answer", subtitle: "Test" },
+    ],
+    edges: [{ id: "e1", from: "start", to: "finish" }],
+    scenario: "catalog_request",
+    ownership: "AI_ACTIVE",
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.status, "pass");
+  assert.deepEqual(result.path.map((step) => step.label), ["Inbound", "Answer"]);
+  assert.equal(result.engine, "Deterministic graph runner");
+});
+
+test("graph runner blocks incomplete Kotiba-shaped workflows", async () => {
+  const response = await callApi("/api/flow-test", {
+    nodes: [
+      { id: "start", type: "trigger", label: "Instagram inbound", subtitle: "Test" },
+      { id: "orchestrator", type: "agent", label: "Sales Agent Orchestrator", subtitle: "Test", agentId: 1 },
+      { id: "finish", type: "output", label: "Answer", subtitle: "Test" },
+    ],
+    edges: [{ id: "e1", from: "start", to: "orchestrator" }, { id: "e2", from: "orchestrator", to: "finish" }],
+    scenario: "catalog_request",
+    ownership: "AI_ACTIVE",
+  });
+  assert.equal(response.status, 422);
+  const result = await response.json();
+  assert.equal(result.status, "fail");
+  assert.match(result.issues.join(" "), /Agent 017|Ownership Gate/);
 });

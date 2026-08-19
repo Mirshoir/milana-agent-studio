@@ -24,8 +24,9 @@ test("server-renders Agent Market", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /<title>Agent Market — Discover or build your own AI agent<\/title>/i);
-  assert.match(html, /Find an agent/);
-  assert.match(html, /Or describe your own/);
+  assert.match(html, /Discover verified agents/);
+  assert.match(html, /Build evidence-backed teams/);
+  assert.match(html, /permissions, evidence, guardrails, wiring, and release readiness/);
   assert.match(html, /Explore agents/);
   assert.match(html, /Create a custom agent/);
   assert.match(html, /Build a complete agent team/);

@@ -124,6 +124,35 @@ export const marketplaceAgents = sqliteTable("marketplace_agents", {
   updatedAt: text("updated_at").notNull(),
 }, (table) => [index("idx_marketplace_agents_owner_updated").on(table.ownerId, table.updatedAt)]);
 
+export const agentPackageRevisions = sqliteTable("agent_package_revisions", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  version: integer("version").notNull(),
+  status: text("status").notNull().default("published"),
+  manifestJson: text("manifest_json").notNull(),
+  readinessScore: integer("readiness_score").notNull(),
+  evidenceCoverage: integer("evidence_coverage").notNull(),
+  changelog: text("changelog").notNull().default("Initial published package"),
+  createdAt: text("created_at").notNull(),
+  publishedAt: text("published_at").notNull(),
+}, (table) => [
+  uniqueIndex("idx_agent_package_revisions_agent_version").on(table.agentId, table.version),
+]);
+
+export const agentEvidenceRecords = sqliteTable("agent_evidence_records", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull(),
+  revisionId: text("revision_id"),
+  claim: text("claim").notNull(),
+  status: text("status").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceUrl: text("source_url"),
+  confidence: real("confidence").notNull(),
+  affectsJson: text("affects_json").notNull().default("[]"),
+  retrievedAt: text("retrieved_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_agent_evidence_records_agent_created").on(table.agentId, table.createdAt)]);
+
 export const agentTeams = sqliteTable("agent_teams", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id").notNull().default("workspace"),

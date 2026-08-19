@@ -32,5 +32,7 @@ export async function ensureStudioSchema() {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_prompt_analyses_agent_created ON prompt_analyses(agent_id, created_at DESC)"),
     db.prepare("CREATE TABLE IF NOT EXISTS marketplace_agents (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT 'workspace', name TEXT NOT NULL, category TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', visibility TEXT NOT NULL DEFAULT 'private', description TEXT NOT NULL, config_json TEXT NOT NULL, installs INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_marketplace_agents_owner_updated ON marketplace_agents(owner_id, updated_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS agent_teams (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT 'workspace', name TEXT NOT NULL, objective TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', creation_mode TEXT NOT NULL DEFAULT 'prompt', research_json TEXT NOT NULL, config_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_agent_teams_owner_updated ON agent_teams(owner_id, updated_at DESC)"),
   ]);
 }

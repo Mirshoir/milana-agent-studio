@@ -12,12 +12,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const image = `${protocol}://${host}/og.png`;
   const title = "Agent Market — Discover or build your own AI agent";
-  const description = "Find trusted AI agents for any job, or describe what you need and turn the idea into a complete, editable agent blueprint.";
+  const description = "Discover AI agents or turn one prompt into a researched, wired agent team with explicit roles, handoffs, shared knowledge, and guardrails.";
   return {
     title,
     description,
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
-    openGraph: { title, description, images: [{ url: image, width: 1536, height: 1024, alt: "Agent Market — Find an agent or describe your own" }] },
+    openGraph: { title, description, images: [{ url: image, width: 1536, height: 1024, alt: "Agent Market — One prompt becomes a researched, wired agent team" }] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-type View = "marketplace" | "builder" | "library" | "activity" | "settings";
+type View = "marketplace" | "builder" | "teams" | "library" | "activity" | "settings";
 type MarketAgent = {
   id: string;
   name: string;
@@ -38,6 +38,10 @@ type Blueprint = {
   steps: Array<{ title: string; detail: string }>;
   updatedAt: string;
 };
+type TeamAgent = { id: string; name: string; role: string; purpose: string; icon: string; accent: string; tools: string[]; inputs: string[]; outputs: string[]; guardrails: string[] };
+type TeamEdge = { id: string; from: string; to: string; label: string; condition: string; payload: string[] };
+type TeamResearch = { mode: "live-ai" | "site-evidence" | "domain-blueprint" | "manual"; summary: string; findings: Array<{ title: string; detail: string; confidence: "high" | "medium" | "assumption" }>; sources: Array<{ title: string; url: string }>; gaps: string[]; completedAt: string };
+type AgentTeam = { id: string; name: string; description: string; objective: string; status: "draft" | "published"; creationMode: "prompt" | "manual"; agents: TeamAgent[]; edges: TeamEdge[]; sharedKnowledge: string[]; channels: string[]; triggers: string[]; successMetrics: string[]; research: TeamResearch; updatedAt: string };
 type ChatMessage = { id: string; role: "architect" | "user"; text: string; time?: string };
 type Toast = { text: string; tone?: "success" | "neutral" } | null;
 
@@ -80,6 +84,8 @@ export default function AgentMarketplace() {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [savedAgents, setSavedAgents] = useState<Blueprint[]>([]);
+  const [savedTeams, setSavedTeams] = useState<AgentTeam[]>([]);
+  const [activeTeam, setActiveTeam] = useState<AgentTeam | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -95,10 +101,15 @@ export default function AgentMarketplace() {
 
   const loadLibrary = async () => {
     try {
-      const response = await fetch("/api/marketplace");
-      if (!response.ok) return;
-      const payload = await response.json() as { agents?: Blueprint[] };
-      setSavedAgents(payload.agents || []);
+      const [agentResponse, teamResponse] = await Promise.all([fetch("/api/marketplace"), fetch("/api/teams")]);
+      if (agentResponse.ok) {
+        const payload = await agentResponse.json() as { agents?: Blueprint[] };
+        setSavedAgents(payload.agents || []);
+      }
+      if (teamResponse.ok) {
+        const payload = await teamResponse.json() as { teams?: AgentTeam[] };
+        setSavedTeams(payload.teams || []);
+      }
     } catch { /* The marketplace catalog remains available if persistence is offline. */ }
   };
 
@@ -182,11 +193,12 @@ export default function AgentMarketplace() {
 
   return (
     <main className="app-shell">
-      <Sidebar view={view} setView={setView} open={sidebarOpen} setOpen={setSidebarOpen} onNew={startNew} savedAgents={savedAgents} />
+      <Sidebar view={view} setView={setView} open={sidebarOpen} setOpen={setSidebarOpen} onNew={startNew} savedAgents={savedAgents} savedTeams={savedTeams} />
       <section className="app-main">
         <Topbar view={view} onMenu={() => setSidebarOpen(true)} model={model} setModel={setModel} blueprint={blueprint} onPublish={publish} busy={busy} />
-        {view === "marketplace" && <Marketplace query={query} setQuery={setQuery} category={category} setCategory={setCategory} filtered={filtered} onCreate={createAgent} prompt={prompt} setPrompt={setPrompt} onInstall={installAgent} />}
+        {view === "marketplace" && <Marketplace query={query} setQuery={setQuery} category={category} setCategory={setCategory} filtered={filtered} onCreate={createAgent} onTeam={() => { setActiveTeam(null); setView("teams"); }} prompt={prompt} setPrompt={setPrompt} onInstall={installAgent} />}
         {view === "builder" && <Builder messages={messages} blueprint={blueprint} prompt={prompt} setPrompt={setPrompt} submit={submitPrompt} createAgent={createAgent} busy={busy} webEnabled={webEnabled} setWebEnabled={setWebEnabled} model={model} setModel={setModel} composerRef={composerRef} onPublish={publish} />}
+        {view === "teams" && <TeamStudio teams={savedTeams} setTeams={setSavedTeams} activeTeam={activeTeam} setActiveTeam={setActiveTeam} model={model} notify={notify} />}
         {view === "library" && <Library agents={savedAgents} onOpen={(agent) => { setBlueprint(agent); setMessages([...initialMessages, { id: crypto.randomUUID(), role: "architect", text: `${agent.name} is open. Ask me to change its behavior, tools, knowledge, or guardrails.` }]); setView("builder"); }} onNew={startNew} />}
         {view === "activity" && <Activity agents={savedAgents} />}
         {view === "settings" && <Settings model={model} setModel={setModel} webEnabled={webEnabled} setWebEnabled={setWebEnabled} notify={notify} />}
@@ -197,7 +209,7 @@ export default function AgentMarketplace() {
   );
 }
 
-function Sidebar({ view, setView, open, setOpen, onNew, savedAgents }: { view: View; setView: (view: View) => void; open: boolean; setOpen: (open: boolean) => void; onNew: () => void; savedAgents: Blueprint[] }) {
+function Sidebar({ view, setView, open, setOpen, onNew, savedAgents, savedTeams }: { view: View; setView: (view: View) => void; open: boolean; setOpen: (open: boolean) => void; onNew: () => void; savedAgents: Blueprint[]; savedTeams: AgentTeam[] }) {
   const navigate = (next: View) => { setView(next); setOpen(false); };
   return <>
     <div className={`sidebar-scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
@@ -206,6 +218,7 @@ function Sidebar({ view, setView, open, setOpen, onNew, savedAgents }: { view: V
       <button className="new-agent" onClick={onNew}><Glyph>＋</Glyph><span>New agent</span><kbd>⌘ K</kbd></button>
       <nav className="primary-nav" aria-label="Primary navigation">
         <NavButton active={view === "marketplace"} onClick={() => navigate("marketplace")} mark="⌂" label="Discover" />
+        <NavButton active={view === "teams"} onClick={() => navigate("teams")} mark="⌘" label="Agent teams" count={savedTeams.length || undefined} />
         <NavButton active={view === "library"} onClick={() => navigate("library")} mark="◫" label="My agents" count={savedAgents.length || undefined} />
         <NavButton active={view === "activity"} onClick={() => navigate("activity")} mark="↗" label="Activity" />
       </nav>
@@ -226,18 +239,18 @@ function NavButton({ active, onClick, mark, label, count }: { active: boolean; o
 }
 
 function Topbar({ view, onMenu, model, setModel, blueprint, onPublish, busy }: { view: View; onMenu: () => void; model: string; setModel: (model: string) => void; blueprint: Blueprint | null; onPublish: () => void; busy: boolean }) {
-  const titles: Record<View, string> = { marketplace: "Discover", builder: blueprint?.name || "Agent Builder", library: "My agents", activity: "Activity", settings: "Settings" };
+  const titles: Record<View, string> = { marketplace: "Discover", builder: blueprint?.name || "Agent Builder", teams: "Agent Teams", library: "My agents", activity: "Activity", settings: "Settings" };
   return <header className="topbar"><div className="topbar-title"><button className="menu-button" onClick={onMenu} aria-label="Open menu">☰</button><span className="mobile-brand">✦</span><strong>{titles[view]}</strong>{view === "builder" && <span className="draft-pill">Draft</span>}</div><div className="topbar-actions">{view === "builder" && <><label className="model-picker top-model"><span className="status-dot" /> <select aria-label="Model" value={model} onChange={(event) => setModel(event.target.value)}><option>Auto</option><option>Fast</option><option>Powerful</option></select></label><button className="icon-button" aria-label="Share">↗</button><button className="publish-button" onClick={onPublish} disabled={!blueprint || busy}>{blueprint?.status === "published" ? "Published" : "Publish"}</button></>} {view !== "builder" && <><button className="icon-button search-top" aria-label="Search">⌕</button><button className="avatar-button">AM</button></>}</div></header>;
 }
 
-function Marketplace({ query, setQuery, category, setCategory, filtered, onCreate, prompt, setPrompt, onInstall }: { query: string; setQuery: (value: string) => void; category: string; setCategory: (value: string) => void; filtered: MarketAgent[]; onCreate: (value: string) => void; prompt: string; setPrompt: (value: string) => void; onInstall: (agent: MarketAgent) => void }) {
+function Marketplace({ query, setQuery, category, setCategory, filtered, onCreate, onTeam, prompt, setPrompt, onInstall }: { query: string; setQuery: (value: string) => void; category: string; setCategory: (value: string) => void; filtered: MarketAgent[]; onCreate: (value: string) => void; onTeam: () => void; prompt: string; setPrompt: (value: string) => void; onInstall: (agent: MarketAgent) => void }) {
   const featured = catalog.find((agent) => agent.featured)!;
   return <div className="marketplace-view">
     <section className="market-hero">
       <div className="hero-glow glow-one" /><div className="hero-glow glow-two" />
       <div className="hero-copy"><span className="eyebrow"><i /> THE AGENT MARKETPLACE</span><h1>Find an agent.<br/><span>Or describe your own.</span></h1><p>Discover trusted AI agents for any job, or turn a plain-language idea into a production-ready agent in minutes.</p></div>
       <form className="hero-composer" onSubmit={(event) => { event.preventDefault(); onCreate(prompt); }}><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the agent you want to create…" aria-label="Describe the agent you want to create" rows={2} /><div className="hero-composer-foot"><div><button type="button" className="composer-tool" aria-label="Attach files">＋</button><button type="button" className="context-pill"><span>⌘</span> Add knowledge</button></div><button className="hero-send" aria-label="Create agent" disabled={!prompt.trim()}>↑</button></div></form>
-      <div className="prompt-suggestions"><span>Try</span>{quickPrompts.map((item) => <button key={item} onClick={() => onCreate(item)}>{item}<i>↗</i></button>)}</div>
+      <div className="prompt-suggestions"><span>Try</span>{quickPrompts.map((item) => <button key={item} onClick={() => onCreate(item)}>{item}<i>↗</i></button>)}<button className="team-prompt-chip" onClick={onTeam}>Build a complete agent team <i>→</i></button></div>
     </section>
     <section className="market-content">
       <div className="market-toolbar"><div><h2>Explore agents</h2><p>Ready-to-use specialists built by trusted creators.</p></div><label className="market-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search agents" aria-label="Search agents" /></label></div>
@@ -281,6 +294,123 @@ function BlueprintPanel({ blueprint, onPublish, busy }: { blueprint: Blueprint; 
 
 function SpecBlock({ title, action, children }: { title: string; action?: string; children: React.ReactNode }) {
   return <section className="spec-block"><div className="spec-title"><h4>{title}</h4>{action && <button>{action}</button>}</div>{children}</section>;
+}
+
+function TeamStudio({ teams, setTeams, activeTeam, setActiveTeam, model, notify }: { teams: AgentTeam[]; setTeams: React.Dispatch<React.SetStateAction<AgentTeam[]>>; activeTeam: AgentTeam | null; setActiveTeam: (team: AgentTeam | null) => void; model: string; notify: (text: string, tone?: "success" | "neutral") => void }) {
+  const [mode, setMode] = useState<"prompt" | "manual">("prompt");
+  const [brief, setBrief] = useState("Create a complete marketing team for a growing ecommerce brand. Research our audience and competitors, create content across Instagram and email, run campaigns, measure results, and continuously improve.");
+  const [website, setWebsite] = useState("");
+  const [teamName, setTeamName] = useState("Marketing Growth Team");
+  const [roles, setRoles] = useState(["Marketing Lead", "Audience Researcher", "Content Strategist", "Creative Producer", "Performance Analyst"]);
+  const [roleInput, setRoleInput] = useState("");
+  const [stage, setStage] = useState<"research" | "members" | "wiring" | "runbook">("research");
+  const [busy, setBusy] = useState(false);
+  const [edgeFrom, setEdgeFrom] = useState("");
+  const [edgeTo, setEdgeTo] = useState("");
+  const [edgeLabel, setEdgeLabel] = useState("verified handoff");
+
+  const remember = (team: AgentTeam) => {
+    setActiveTeam(team);
+    setTeams((current) => [team, ...current.filter((item) => item.id !== team.id)]);
+  };
+
+  const generate = async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/teams", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "generate", prompt: brief, website, model }) });
+      const payload = await response.json() as { team?: AgentTeam; error?: string };
+      if (!response.ok || !payload.team) throw new Error(payload.error || "The team could not be created.");
+      remember(payload.team);
+      setStage("research");
+      notify(`${payload.team.name} researched and created`);
+    } catch (error) { notify(error instanceof Error ? error.message : "Team creation failed", "neutral"); }
+    finally { setBusy(false); }
+  };
+
+  const createManual = async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/teams", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "manual", prompt: brief, name: teamName, roles }) });
+      const payload = await response.json() as { team?: AgentTeam; error?: string };
+      if (!response.ok || !payload.team) throw new Error(payload.error || "The team could not be created.");
+      remember(payload.team);
+      setStage("members");
+      notify("Manual team workspace created");
+    } catch (error) { notify(error instanceof Error ? error.message : "Team creation failed", "neutral"); }
+    finally { setBusy(false); }
+  };
+
+  const replaceTeam = (next: AgentTeam) => {
+    setActiveTeam(next);
+    setTeams((current) => current.map((item) => item.id === next.id ? next : item));
+  };
+
+  const persist = async (action: "save" | "publish" = "save") => {
+    if (!activeTeam) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/teams", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, team: activeTeam }) });
+      const payload = await response.json() as { team?: AgentTeam; error?: string };
+      if (!response.ok || !payload.team) throw new Error(payload.error || "The team could not be saved.");
+      replaceTeam(payload.team);
+      notify(action === "publish" ? `${payload.team.name} published` : "Team architecture saved");
+    } catch (error) { notify(error instanceof Error ? error.message : "Save failed", "neutral"); }
+    finally { setBusy(false); }
+  };
+
+  const updateMember = (id: string, field: "name" | "role" | "purpose", value: string) => {
+    if (!activeTeam) return;
+    replaceTeam({ ...activeTeam, agents: activeTeam.agents.map((agent) => agent.id === id ? { ...agent, [field]: value, ...(field === "name" ? { icon: value[0]?.toUpperCase() || "A" } : {}) } : agent) });
+  };
+
+  const addMember = () => {
+    if (!activeTeam) return;
+    const index = activeTeam.agents.length;
+    const member: TeamAgent = { id: `member_${crypto.randomUUID()}`, name: `Specialist ${index + 1}`, role: "New specialist", purpose: "Own one bounded responsibility and return a verified result to the team.", icon: "S", accent: ["violet", "sky", "pink", "orange", "emerald", "indigo"][index % 6], tools: ["Workspace memory"], inputs: ["Assigned task", "Team context"], outputs: ["Verified result", "Open questions"], guardrails: ["Stay within assigned ownership", "Include evidence with every handoff"] };
+    replaceTeam({ ...activeTeam, agents: [...activeTeam.agents, member] });
+  };
+
+  const removeMember = (id: string) => {
+    if (!activeTeam) return;
+    replaceTeam({ ...activeTeam, agents: activeTeam.agents.filter((agent) => agent.id !== id), edges: activeTeam.edges.filter((edge) => edge.from !== id && edge.to !== id) });
+  };
+
+  const addConnection = () => {
+    if (!activeTeam || !edgeFrom || !edgeTo || edgeFrom === edgeTo) return;
+    const source = activeTeam.agents.find((agent) => agent.id === edgeFrom);
+    const edge: TeamEdge = { id: `edge_${crypto.randomUUID()}`, from: edgeFrom, to: edgeTo, label: edgeLabel.trim() || "handoff", condition: "Required inputs are present and the source result passed its checks", payload: source?.outputs.slice(0, 2) || ["Verified result"] };
+    replaceTeam({ ...activeTeam, edges: [...activeTeam.edges, edge] });
+    setEdgeTo("");
+    notify("Connection added");
+  };
+
+  const updateEdge = (id: string, field: "from" | "to" | "label" | "condition", value: string) => {
+    if (!activeTeam) return;
+    replaceTeam({ ...activeTeam, edges: activeTeam.edges.map((edge) => edge.id === id ? { ...edge, [field]: value } : edge) });
+  };
+
+  if (!activeTeam) return <div className="team-create-view">
+    <section className="team-create-hero"><div><span className="eyebrow"><i /> MULTI-AGENT CREATOR</span><h1>Build the team,<br/><span>not just the agents.</span></h1><p>Start with one outcome. Agent Architect researches the domain, defines the right specialists, and wires their handoffs into one working system.</p></div><div className="team-architecture-preview"><div className="preview-core">✦<small>Lead</small></div>{["Research", "Strategy", "Create", "Measure"].map((item, index) => <div key={item} className={`preview-member pm-${index + 1}`}><i>{item[0]}</i><span>{item}</span></div>)}</div></section>
+    <section className="team-create-content"><div className="team-mode-tabs"><button className={mode === "prompt" ? "active" : ""} onClick={() => setMode("prompt")}><span>✦</span><strong>Build with one prompt</strong><small>Research, roles, and wiring included</small></button><button className={mode === "manual" ? "active" : ""} onClick={() => setMode("manual")}><span>＋</span><strong>Build manually</strong><small>Choose every role and connection</small></button></div>
+      {mode === "prompt" ? <div className="team-prompt-card"><div className="team-card-heading"><div><span>01</span><h2>Describe the outcome</h2></div><p>Explain the business goal, audience, channels, constraints, and what success should look like.</p></div><textarea value={brief} onChange={(event) => setBrief(event.target.value)} rows={6} aria-label="Describe the agent team"/><div className="research-source"><label><span>◎</span><div><strong>Company website</strong><small>Ground the team in your real offer and language</small></div></label><input value={website} onChange={(event) => setWebsite(event.target.value)} placeholder="https://yourcompany.com (optional)" /></div><div className="research-options"><span><i>✓</i> Domain research</span><span><i>✓</i> Role gap analysis</span><span><i>✓</i> Handoff contracts</span><span><i>✓</i> Feedback loop</span></div><button className="research-create-button" onClick={generate} disabled={busy || brief.trim().length < 20}>{busy ? <><i className="button-spinner"/> Researching before design…</> : <>Research & create team <span>→</span></>}</button></div> : <div className="manual-team-card"><div className="manual-team-fields"><label><span>Team name</span><input value={teamName} onChange={(event) => setTeamName(event.target.value)} /></label><label><span>Shared objective</span><textarea value={brief} onChange={(event) => setBrief(event.target.value)} rows={3}/></label></div><div className="manual-role-builder"><div className="manual-role-head"><div><h3>Team roles</h3><p>Add specialists now. You can edit tools and wiring next.</p></div><span>{roles.length} roles</span></div><div className="role-chip-grid">{roles.map((role, index) => <div key={`${role}-${index}`}><span className={`mini-avatar ${["violet", "sky", "pink", "orange", "emerald", "indigo"][index % 6]}`}>{role[0]}</span><input value={role} onChange={(event) => setRoles((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}/><button onClick={() => setRoles((current) => current.filter((_, itemIndex) => itemIndex !== index))}>×</button></div>)}</div><div className="add-role-row"><input value={roleInput} onChange={(event) => setRoleInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && roleInput.trim()) { setRoles((current) => [...current, roleInput.trim()]); setRoleInput(""); } }} placeholder="Add another role…"/><button onClick={() => { if (roleInput.trim()) { setRoles((current) => [...current, roleInput.trim()]); setRoleInput(""); } }}>＋ Add role</button></div></div><button className="research-create-button" onClick={createManual} disabled={busy || roles.length < 2}>{busy ? "Creating workspace…" : <>Open team workspace <span>→</span></>}</button></div>}
+      {teams.length > 0 && <div className="existing-teams"><div className="existing-head"><h2>Your teams</h2><span>{teams.length} saved</span></div><div className="team-library-grid">{teams.map((team) => <button key={team.id} onClick={() => { setActiveTeam(team); setStage("research"); }}><div className="team-stack">{team.agents.slice(0, 4).map((agent, index) => <i key={agent.id} className={agent.accent} style={{ zIndex: 5 - index }}>{agent.icon}</i>)}</div><h3>{team.name}</h3><p>{team.agents.length} agents · {team.edges.length} connections</p><span className={`team-status ${team.status}`}>{team.status}</span></button>)}</div></div>}
+    </section>
+  </div>;
+
+  const lead = activeTeam.agents[0];
+  return <div className="team-workbench"><header className="team-workbench-head"><div className="team-title-row"><button className="back-teams" onClick={() => setActiveTeam(null)}>←</button><div className="team-stack small">{activeTeam.agents.slice(0, 4).map((agent, index) => <i key={agent.id} className={agent.accent} style={{ zIndex: 5 - index }}>{agent.icon}</i>)}</div><div><span>AGENT TEAM</span><h1>{activeTeam.name}</h1></div><span className={`team-status ${activeTeam.status}`}><i /> {activeTeam.status}</span></div><div><button className="save-team" onClick={() => persist("save")} disabled={busy}>Save</button><button className="publish-team" onClick={() => persist("publish")} disabled={busy}>{activeTeam.status === "published" ? "Published ✓" : "Publish team"}</button></div></header>
+    <nav className="team-stage-tabs"><button className={stage === "research" ? "active" : ""} onClick={() => setStage("research")}><span>01</span> Research <i className="complete">✓</i></button><button className={stage === "members" ? "active" : ""} onClick={() => setStage("members")}><span>02</span> Team <em>{activeTeam.agents.length}</em></button><button className={stage === "wiring" ? "active" : ""} onClick={() => setStage("wiring")}><span>03</span> Wiring <em>{activeTeam.edges.length}</em></button><button className={stage === "runbook" ? "active" : ""} onClick={() => setStage("runbook")}><span>04</span> Runbook</button></nav>
+    <div className="team-stage-body">
+      {stage === "research" && <div className="research-stage"><div className="stage-intro"><span className="eyebrow"><i /> RESEARCH BEFORE ARCHITECTURE</span><h2>Evidence used to design this team</h2><p>{activeTeam.research.summary}</p></div><div className="research-mode-card"><div className={`research-mode-icon ${activeTeam.research.mode}`}>{activeTeam.research.mode === "live-ai" ? "◎" : activeTeam.research.mode === "site-evidence" ? "⌂" : "◫"}</div><div><strong>{activeTeam.research.mode === "live-ai" ? "Live web research" : activeTeam.research.mode === "site-evidence" ? "Company website evidence" : activeTeam.research.mode === "manual" ? "Manual architecture" : "Domain architecture research"}</strong><span>{new Date(activeTeam.research.completedAt).toLocaleString()}</span></div><b>{activeTeam.research.findings.length} findings</b></div><div className="research-findings">{activeTeam.research.findings.map((finding, index) => <article key={`${finding.title}-${index}`}><span>{String(index + 1).padStart(2, "0")}</span><div><div><h3>{finding.title}</h3><em className={finding.confidence}>{finding.confidence}</em></div><p>{finding.detail}</p></div></article>)}</div>{activeTeam.research.sources.length > 0 && <section className="research-sources"><h3>Evidence sources</h3>{activeTeam.research.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><span>↗</span><div><strong>{source.title}</strong><small>{source.url}</small></div></a>)}</section>}<section className="research-gaps"><h3>Evidence gaps</h3>{activeTeam.research.gaps.map((gap) => <p key={gap}><span>!</span>{gap}</p>)}</section><button className="next-stage" onClick={() => setStage("members")}>Review the team <span>→</span></button></div>}
+      {stage === "members" && <div className="members-stage"><div className="stage-heading-row"><div><span className="eyebrow"><i /> BOUNDED OWNERSHIP</span><h2>{activeTeam.agents.length} specialists, one shared outcome</h2><p>Each agent owns a distinct responsibility and exposes explicit inputs and outputs.</p></div><button onClick={addMember}>＋ Add agent</button></div><div className="team-member-grid">{activeTeam.agents.map((agent, index) => <article className="team-member-card" key={agent.id}><div className="member-card-top"><span className={`agent-icon ${agent.accent}`}>{agent.icon}</span><div><span>{index === 0 ? "ORCHESTRATOR" : `SPECIALIST ${String(index).padStart(2, "0")}`}</span><input value={agent.name} onChange={(event) => updateMember(agent.id, "name", event.target.value)}/></div><button onClick={() => removeMember(agent.id)} disabled={activeTeam.agents.length <= 2}>×</button></div><label><span>Role</span><input value={agent.role} onChange={(event) => updateMember(agent.id, "role", event.target.value)}/></label><label><span>Purpose</span><textarea value={agent.purpose} onChange={(event) => updateMember(agent.id, "purpose", event.target.value)} rows={3}/></label><div className="member-contract"><div><span>INPUTS</span>{agent.inputs.slice(0, 3).map((item) => <i key={item}>{item}</i>)}</div><b>→</b><div><span>OUTPUTS</span>{agent.outputs.slice(0, 3).map((item) => <i key={item}>{item}</i>)}</div></div><div className="member-tools"><span>TOOLS</span>{agent.tools.map((tool) => <i key={tool}>{tool}</i>)}</div></article>)}</div><button className="next-stage" onClick={() => setStage("wiring")}>Wire the handoffs <span>→</span></button></div>}
+      {stage === "wiring" && <div className="wiring-stage"><div className="stage-heading-row"><div><span className="eyebrow"><i /> EXECUTABLE CONNECTIONS</span><h2>Every arrow has a contract</h2><p>A connection defines who hands off, when it can happen, and exactly what data moves.</p></div><button onClick={() => persist("save")}>Save wiring</button></div><div className="wiring-canvas"><div className="canvas-grid"/><div className="lead-node">{lead && <><span className={`agent-icon ${lead.accent}`}>{lead.icon}</span><div><small>TEAM ORCHESTRATOR</small><strong>{lead.name}</strong><em>{activeTeam.edges.filter((edge) => edge.from === lead.id || edge.to === lead.id).length} connections</em></div></>}</div><div className="lead-rail"><span>delegates</span><i>↓</i></div><div className="team-node-grid">{activeTeam.agents.slice(1).map((agent) => <div className="wire-node" key={agent.id}><span className={`mini-avatar ${agent.accent}`}>{agent.icon}</span><div><strong>{agent.name}</strong><small>{agent.role}</small></div><em>{activeTeam.edges.filter((edge) => edge.from === agent.id || edge.to === agent.id).length}</em></div>)}</div><div className="feedback-rail"><i>↖</i><span>verified outputs and learning return to the team state</span><i>↗</i></div></div><section className="connection-editor"><div className="connection-head"><div><h3>Handoff contracts</h3><p>These connections are saved with the team and validated before publishing.</p></div><span>{activeTeam.edges.length} active</span></div><div className="connection-list">{activeTeam.edges.map((edge, index) => <div className="connection-row" key={edge.id}><span className="connection-number">{String(index + 1).padStart(2, "0")}</span><div className="connection-route"><select value={edge.from} onChange={(event) => updateEdge(edge.id, "from", event.target.value)}>{activeTeam.agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select><i>→</i><select value={edge.to} onChange={(event) => updateEdge(edge.id, "to", event.target.value)}>{activeTeam.agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></div><label><span>HANDOFF</span><input value={edge.label} onChange={(event) => updateEdge(edge.id, "label", event.target.value)}/></label><label><span>CONDITION</span><input value={edge.condition} onChange={(event) => updateEdge(edge.id, "condition", event.target.value)}/></label><div className="payload-chips"><span>PAYLOAD</span>{edge.payload.map((item) => <i key={item}>{item}</i>)}</div><button className="remove-edge" onClick={() => replaceTeam({ ...activeTeam, edges: activeTeam.edges.filter((item) => item.id !== edge.id) })}>×</button></div>)}</div><div className="add-connection"><select value={edgeFrom} onChange={(event) => setEdgeFrom(event.target.value)}><option value="">From agent…</option>{activeTeam.agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select><span>→</span><select value={edgeTo} onChange={(event) => setEdgeTo(event.target.value)}><option value="">To agent…</option>{activeTeam.agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select><input value={edgeLabel} onChange={(event) => setEdgeLabel(event.target.value)} placeholder="Handoff label"/><button onClick={addConnection} disabled={!edgeFrom || !edgeTo || edgeFrom === edgeTo}>＋ Add connection</button></div></section><button className="next-stage" onClick={() => setStage("runbook")}>Review runbook <span>→</span></button></div>}
+      {stage === "runbook" && <div className="runbook-stage"><div className="stage-intro"><span className="eyebrow"><i /> TEAM OPERATING SYSTEM</span><h2>Shared context and success contract</h2><p>The runbook keeps the agents aligned after the visual design is complete.</p></div><div className="runbook-grid"><RunbookBlock title="Shared knowledge" mark="◫" items={activeTeam.sharedKnowledge}/><RunbookBlock title="Triggers" mark="⚡" items={activeTeam.triggers}/><RunbookBlock title="Success metrics" mark="↗" items={activeTeam.successMetrics}/><RunbookBlock title="Connected channels" mark="◎" items={activeTeam.channels}/></div><section className="publish-checklist"><div><h3>Release readiness</h3><p>The team needs agents, connections, and reviewed evidence before publishing.</p></div><span className={activeTeam.agents.length >= 2 ? "pass" : ""}>✓ {activeTeam.agents.length} agents defined</span><span className={activeTeam.edges.length > 0 ? "pass" : ""}>✓ {activeTeam.edges.length} handoffs connected</span><span className={activeTeam.research.findings.length > 0 ? "pass" : ""}>✓ Research reviewed</span></section><button className="runbook-publish" onClick={() => persist("publish")} disabled={busy || activeTeam.edges.length === 0}>{activeTeam.status === "published" ? "Team is published ✓" : "Publish agent team"}</button></div>}
+    </div>
+  </div>;
+}
+
+function RunbookBlock({ title, mark, items }: { title: string; mark: string; items: string[] }) {
+  return <section><div><span>{mark}</span><h3>{title}</h3></div>{items.map((item) => <p key={item}><i>✓</i>{item}</p>)}</section>;
 }
 
 function Library({ agents, onOpen, onNew }: { agents: Blueprint[]; onOpen: (agent: Blueprint) => void; onNew: () => void }) {

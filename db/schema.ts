@@ -123,3 +123,16 @@ export const marketplaceAgents = sqliteTable("marketplace_agents", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, (table) => [index("idx_marketplace_agents_owner_updated").on(table.ownerId, table.updatedAt)]);
+
+export const agentTeams = sqliteTable("agent_teams", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().default("workspace"),
+  name: text("name").notNull(),
+  objective: text("objective").notNull(),
+  status: text("status").notNull().default("draft"),
+  creationMode: text("creation_mode").notNull().default("prompt"),
+  researchJson: text("research_json").notNull(),
+  configJson: text("config_json").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_agent_teams_owner_updated").on(table.ownerId, table.updatedAt)]);

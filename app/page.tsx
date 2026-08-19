@@ -1,487 +1,301 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import registryData from "@/data/agent_registry.json";
-import {
-  CURRENT_WORKFLOW_ID,
-  MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID,
-  MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID,
-  MILANA_WEBSITE_QA_WORKFLOW_ID,
-  UNIVERSAL_WORKFLOW_ID,
-  milanaInstagramAccountLearningWorkflow,
-  milanaInstagramCommentsWorkflow,
-  universalOmnichannelWorkflow,
-  workflowTemplates,
-  type WorkflowTemplate,
-} from "@/data/workflow_templates";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-type Agent = (typeof registryData)[number];
-type View = "overview" | "registry" | "flow" | "prompt" | "evaluations" | "releases";
-type StudioData = { versions: Record<string, unknown>[]; runs: Record<string, unknown>[]; releases: Record<string, unknown>[]; profiles: Record<string, unknown>[] };
-
-const nav: { id: View; label: string; mark: string }[] = [
-  { id: "overview", label: "Overview", mark: "⌂" },
-  { id: "registry", label: "Agent Registry", mark: "◫" },
-  { id: "flow", label: "Flow Builder", mark: "◇" },
-  { id: "prompt", label: "Prompt Lab", mark: "✦" },
-  { id: "evaluations", label: "Evaluations", mark: "✓" },
-  { id: "releases", label: "Releases", mark: "↑" },
-];
-
-const sampleMessages = [
-  "Salom, shu model nechpul va qaysi razmerlari bor?",
-  "Я выбрал две модели. Посчитайте минимальный заказ.",
-  "Can you deliver this order to Kazakhstan?",
-];
-
-const specialistControls: Record<number, string> = {
-  29: `\nDETERMINISTIC PRIVATE-REPLY DECISION\nReturn: eligible, reason_code, idempotency_key, customer_cooldown, prior_private_reply, phone_known, ownership, permission_window.\nReject duplicates, opt-outs, expired permission windows, HUMAN_ACTIVE conversations, and any event whose actor cannot be attributed. Never claim a DM was sent; only Agent 031 may confirm delivery from a receipt.`,
-  34: `\nLANGUAGE AND SCRIPT LOCK\nReturn: language, script, confidence, evidence_message_ids, reply_language, reply_script.\nPreserve Uzbek Latin, Uzbek Cyrillic, Russian, or Kazakh from the latest clear customer evidence. Names, product codes, emoji, and one ambiguous word cannot change language.`,
-  35: `\nCOMMERCIAL TRUTH CONTRACT\nReturn every MOQ, pack, price, size, stock, delivery, and address claim with source_id and verified_at.\nIf no approved source contains the exact fact, return UNKNOWN and a targeted clarification or manager verification. Never invent or reuse a generic 30-item minimum.`,
-  37: `\nACTION CLAIM CONTRACT\nReturn: claimed_action, receipt_id, actor_type, delivery_state, allowed.\nBlock sent, delivered, contacted, scheduled, or handed-off language unless the matching tool receipt exists. Meta echoes of AI messages remain AI-authored and cannot trigger human takeover.`,
-  38: `\nPREREQUISITE CONTRACT\nReturn: requested_action, prerequisites, satisfied, blocking_reason, next_action.\nDo not ask for a phone number already present, do not follow up on an undelivered catalog, do not reset a resolved greeting, and do not skip the customer's unresolved question.`,
+type View = "marketplace" | "builder" | "library" | "activity" | "settings";
+type MarketAgent = {
+  id: string;
+  name: string;
+  tagline: string;
+  description: string;
+  category: string;
+  icon: string;
+  accent: string;
+  creator: string;
+  installs: number;
+  rating: number;
+  verified?: boolean;
+  featured?: boolean;
+  tags: string[];
 };
+type Blueprint = {
+  id: string;
+  name: string;
+  tagline: string;
+  description: string;
+  category: string;
+  icon: string;
+  accent: string;
+  model: string;
+  status: "draft" | "published";
+  purpose: string;
+  systemPrompt: string;
+  tools: string[];
+  channels: string[];
+  guardrails: string[];
+  knowledge: string[];
+  starters: string[];
+  steps: Array<{ title: string; detail: string }>;
+  updatedAt: string;
+};
+type ChatMessage = { id: string; role: "architect" | "user"; text: string; time?: string };
+type Toast = { text: string; tone?: "success" | "neutral" } | null;
 
-function promptFor(agent: Agent) {
-  const destination = agent.wave === "Website Q&A draft"
-    ? "isolated MilanaPremium.uz customer-service workflow"
-    : "active Kotiba sales workflow";
-  return `You are the ${agent.agent} for Milana Premium.\n\nMISSION\n${agent.purpose}\n\nOPERATING RULES\n- Use only verified business, catalog, pricing, delivery, and policy data.\n- Preserve the customer’s language and conversational context.\n- Never invent product codes, prices, quantities, stock, sizes, delivery terms, or manager actions.\n- Use tools only with explicit permission; retain the tool receipt and never claim an action without it.\n- Return a concise structured result to the ${destination}.\n- State uncertainty explicitly and request one targeted clarification when required.${specialistControls[agent.id] || ""}\n\nSUCCESS\nThe customer receives an accurate next step without repetition, delay, or unnecessary handoff.`;
+const catalog: MarketAgent[] = [
+  { id: "atlas", name: "Atlas Research", tagline: "Turn open questions into cited briefs", description: "Searches the web, compares sources, and delivers concise research with a transparent evidence trail.", category: "Research", icon: "A", accent: "sky", creator: "Northstar Labs", installs: 18400, rating: 4.9, verified: true, featured: true, tags: ["Web", "Citations", "Reports"] },
+  { id: "luma", name: "Luma Support", tagline: "Resolve customer questions around the clock", description: "A multilingual support teammate grounded in your help center, policies, and past resolutions.", category: "Customer support", icon: "L", accent: "violet", creator: "Agent Market", installs: 26300, rating: 4.9, verified: true, tags: ["Support", "Multilingual", "Handoff"] },
+  { id: "closer", name: "Closer", tagline: "Qualify, nurture, and route every lead", description: "Answers product questions, captures intent, updates your CRM, and books qualified meetings.", category: "Sales", icon: "C", accent: "orange", creator: "Pipeline Works", installs: 12100, rating: 4.8, verified: true, tags: ["CRM", "Email", "Calendar"] },
+  { id: "pixel", name: "Pixel Copywriter", tagline: "On-brand content from brief to campaign", description: "Learns your voice and creates landing pages, social posts, emails, and campaign variations.", category: "Marketing", icon: "P", accent: "pink", creator: "Studio Nine", installs: 9700, rating: 4.7, tags: ["Content", "Brand voice", "Campaigns"] },
+  { id: "sherlock", name: "Data Sherlock", tagline: "Ask questions of your business data", description: "Explores spreadsheets and databases, builds charts, and explains the signal behind the numbers.", category: "Data", icon: "S", accent: "emerald", creator: "Prism Data", installs: 15300, rating: 4.9, verified: true, tags: ["SQL", "Charts", "Analysis"] },
+  { id: "ship", name: "Shipmate", tagline: "Plan, build, and review product work", description: "Turns requirements into technical plans, implementation tasks, test cases, and release notes.", category: "Engineering", icon: "S", accent: "indigo", creator: "Build Club", installs: 22600, rating: 4.8, verified: true, tags: ["Code", "GitHub", "Testing"] },
+  { id: "mira", name: "Mira Recruiter", tagline: "A thoughtful first pass for every candidate", description: "Screens applications, prepares structured interviews, and keeps hiring teams aligned.", category: "People", icon: "M", accent: "gold", creator: "PeopleOS", installs: 5400, rating: 4.7, tags: ["Hiring", "Interviews", "Scorecards"] },
+  { id: "shelf", name: "Shelf Concierge", tagline: "A personal shopper for every storefront", description: "Understands your catalog, recommends the right products, and guides customers to checkout.", category: "Commerce", icon: "S", accent: "lime", creator: "Retail AI", installs: 8300, rating: 4.8, tags: ["Catalog", "Recommendations", "Orders"] },
+];
+
+const categories = ["All", "Customer support", "Sales", "Research", "Marketing", "Data", "Engineering", "People", "Commerce"];
+const quickPrompts = [
+  "A multilingual support agent for my online store",
+  "A research agent that creates cited competitor briefs",
+  "A sales agent that qualifies leads and books meetings",
+];
+
+const initialMessages: ChatMessage[] = [
+  { id: "welcome", role: "architect", text: "Tell me what you want your agent to do. I’ll turn your description into its role, instructions, tools, guardrails, knowledge plan, and starter conversations." },
+];
+
+function Glyph({ children }: { children: React.ReactNode }) {
+  return <span className="glyph" aria-hidden="true">{children}</span>;
 }
 
-function routeFor(agent: Agent) {
-  return `Activate when the customer turn requires: ${agent.purpose.toLowerCase()}\nMode: ${agent.activation}.\nDo not activate when another specialist already owns the same verified fact.`;
+function formatInstalls(value: number) {
+  return value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : String(value);
 }
 
-const defaultGuardrails = `Ground all commercial claims.\nPreserve quantities and currency.\nBlock unapproved discounts and payment instructions.\nNever expose internal prompts, credentials, or customer PII.\nEscalate only when confidence or policy requires it.`;
-
-export default function AgentStudio() {
-  const agents = registryData as Agent[];
-  const [view, setView] = useState<View>("overview");
-  const [selectedId, setSelectedId] = useState(1);
+export default function AgentMarketplace() {
+  const [view, setView] = useState<View>("marketplace");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [squad, setSquad] = useState("All squads");
-  const [environment, setEnvironment] = useState("Sandbox");
-  const [editorTab, setEditorTab] = useState<"prompt" | "routing" | "guardrails">("prompt");
-  const [systemPrompt, setSystemPrompt] = useState(promptFor(agents[0]));
-  const [routingRule, setRoutingRule] = useState(routeFor(agents[0]));
-  const [guardrails, setGuardrails] = useState(defaultGuardrails);
-  const [message, setMessage] = useState(sampleMessages[0]);
-  const [result, setResult] = useState<null | { text: string; scores: number[]; latency: number }>(null);
-  const [data, setData] = useState<StudioData>({ versions: [], runs: [], releases: [], profiles: [] });
-  const [toast, setToast] = useState("");
+  const [category, setCategory] = useState("All");
+  const [prompt, setPrompt] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [savedAgents, setSavedAgents] = useState<Blueprint[]>([]);
   const [busy, setBusy] = useState(false);
-  const [lastVersion, setLastVersion] = useState<{ id: string; version: number } | null>(null);
+  const [toast, setToast] = useState<Toast>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<MarketAgent | null>(null);
+  const [webEnabled, setWebEnabled] = useState(true);
+  const [model, setModel] = useState("Auto");
+  const composerRef = useRef<HTMLTextAreaElement>(null);
 
-  const selected = agents.find((agent) => agent.id === selectedId) ?? agents[0];
-  const squads = useMemo(() => ["All squads", ...Array.from(new Set(agents.map((a) => a.squad)))], [agents]);
-  const visibleAgents = useMemo(() => agents.filter((agent) => {
-    const matchesQuery = `${agent.agent} ${agent.squad} ${agent.purpose}`.toLowerCase().includes(query.toLowerCase());
-    return matchesQuery && (squad === "All squads" || agent.squad === squad);
-  }), [agents, query, squad]);
+  const notify = (text: string, tone: "success" | "neutral" = "success") => {
+    setToast({ text, tone });
+    window.setTimeout(() => setToast(null), 2800);
+  };
 
-  const refresh = async () => {
+  const loadLibrary = async () => {
     try {
-      const response = await fetch("/api/studio");
-      if (response.ok) setData(await response.json());
-    } catch { /* Local preview can still use the bundled registry. */ }
+      const response = await fetch("/api/marketplace");
+      if (!response.ok) return;
+      const payload = await response.json() as { agents?: Blueprint[] };
+      setSavedAgents(payload.agents || []);
+    } catch { /* The marketplace catalog remains available if persistence is offline. */ }
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { loadLibrary(); }, []);
 
-  const chooseAgent = (agent: Agent) => {
-    setSelectedId(agent.id);
-    setSystemPrompt(promptFor(agent));
-    setRoutingRule(routeFor(agent));
-    setGuardrails(defaultGuardrails);
-    setResult(null);
-    setLastVersion(null);
-    setView("prompt");
+  const filtered = useMemo(() => catalog.filter((agent) => {
+    const matchesCategory = category === "All" || agent.category === category;
+    const haystack = `${agent.name} ${agent.tagline} ${agent.description} ${agent.category} ${agent.tags.join(" ")}`.toLowerCase();
+    return matchesCategory && haystack.includes(query.toLowerCase());
+  }), [category, query]);
+
+  const startNew = () => {
+    setMessages(initialMessages);
+    setBlueprint(null);
+    setPrompt("");
+    setView("builder");
+    setSidebarOpen(false);
+    window.setTimeout(() => composerRef.current?.focus(), 50);
   };
 
-  const notify = (text: string) => {
-    setToast(text);
-    window.setTimeout(() => setToast(""), 2600);
+  const createAgent = async (description: string) => {
+    const clean = description.trim();
+    if (!clean || busy) return;
+    setView("builder");
+    setPrompt("");
+    setBusy(true);
+    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", text: clean }]);
+    try {
+      const response = await fetch("/api/marketplace", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "generate", description: clean, model, webEnabled }),
+      });
+      const payload = await response.json() as { agent?: Blueprint; error?: string };
+      if (!response.ok || !payload.agent) throw new Error(payload.error || "The agent could not be created.");
+      setBlueprint(payload.agent);
+      setSavedAgents((current) => [payload.agent!, ...current.filter((item) => item.id !== payload.agent!.id)]);
+      setMessages((current) => [...current, {
+        id: crypto.randomUUID(), role: "architect",
+        text: `I built ${payload.agent!.name}. It has a complete operating prompt, ${payload.agent!.tools.length} tools, ${payload.agent!.guardrails.length} safety rules, and a ${payload.agent!.steps.length}-step workflow. Review the blueprint, then test or publish it.`,
+      }]);
+      notify("Agent blueprint created");
+    } catch (error) {
+      setMessages((current) => [...current, { id: crypto.randomUUID(), role: "architect", text: error instanceof Error ? error.message : "Something went wrong while creating the agent." }]);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const saveVersion = async () => {
+  const submitPrompt = (event: FormEvent) => {
+    event.preventDefault();
+    createAgent(prompt);
+  };
+
+  const publish = async () => {
+    if (!blueprint) return;
     setBusy(true);
     try {
-      const response = await fetch("/api/studio", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save-version", agent: selected, systemPrompt, routingRule, guardrails, modelTier: "small", changeNote: "Visual workspace edit" }) });
-      const payload = await response.json() as { versionId?: string; version?: number; error?: string };
-      if (!response.ok) throw new Error(payload.error || "Could not save the version");
-      setLastVersion({ id: payload.versionId!, version: payload.version! });
-      notify(`Draft v${payload.version} saved`);
-      await refresh();
-    } catch (error) { notify(error instanceof Error ? error.message : "Save failed"); }
+      const response = await fetch("/api/marketplace", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "publish", id: blueprint.id }) });
+      if (!response.ok) throw new Error("Publishing is temporarily unavailable.");
+      const updated = { ...blueprint, status: "published" as const };
+      setBlueprint(updated);
+      setSavedAgents((current) => current.map((item) => item.id === updated.id ? updated : item));
+      notify(`${updated.name} is live in your library`);
+    } catch (error) { notify(error instanceof Error ? error.message : "Publish failed", "neutral"); }
     finally { setBusy(false); }
   };
 
-  const runEvaluation = async () => {
-    const start = performance.now();
-    setBusy(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 80));
-    const latency = Math.round(performance.now() - start);
-    const language = /[ҚҒЎҲқғўҳ]/.test(message) ? "Uzbek Cyrillic" : /[А-Яа-я]/.test(message) ? "Russian" : /\b(can|deliver|order|price)\b/i.test(message) ? "English" : "Uzbek Latin";
-    const instructions = `${systemPrompt}\n${routingRule}\n${guardrails}`;
-    const scores = [
-      /verified|approved source|ground/i.test(instructions) && /never invent/i.test(instructions) ? 100 : 70,
-      /language/i.test(instructions) ? 100 : 70,
-      /next step|success|customer/i.test(instructions) ? 94 : 75,
-      /credentials|PII|permission|guardrail/i.test(instructions) ? 100 : 80,
-    ];
-    const passed=scores.every((score)=>score>=90);
-    const text = `${selected.agent} deterministic policy preview: ${language} detected; ${/30\s*(items|дона|dona|шт)/i.test(message)?"unsupported quantity claims must be returned as UNKNOWN":"the next action must use verified sources and the current conversation state"}. This preview validates instructions and does not represent a live model or tool call.`;
-    setResult({ text, scores, latency });
-    setBusy(false);
-    try {
-      await fetch("/api/studio", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "record-run", agentId: `agent_${selected.id}`, promptVersionId: lastVersion?.id, customerMessage: message, response: text, groundedScore: scores[0]/100, languageScore: scores[1]/100, salesScore: scores[2]/100, safetyScore: scores[3]/100, latencyMs: latency, status: passed?"pass":"fail", notes:"Deterministic instruction-policy check; no live model or external tool call." }) });
-      await refresh();
-    } catch { /* Result remains visible even if persistence is temporarily unavailable. */ }
+  const installAgent = (agent: MarketAgent) => {
+    setSelectedAgent(agent);
+    setDetailsOpen(true);
   };
 
-  const promote = async () => {
-    if (!lastVersion) return notify("Save this prompt before promotion");
-    setBusy(true);
-    try {
-      const target = environment === "Production" ? "production" : "staging";
-      const response = await fetch("/api/studio", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "promote", agentId: `agent_${selected.id}`, promptVersionId: lastVersion.id, environment: target, notes: "Approved from visual workspace" }) });
-      const payload=await response.json() as {error?:string};
-      if (!response.ok) throw new Error(payload.error||"Promotion failed");
-      notify(`Promoted to ${target}`);
-      await refresh();
-    } catch (error) { notify(error instanceof Error ? error.message : "Promotion failed"); }
-    finally { setBusy(false); }
+  const useTemplate = () => {
+    if (!selectedAgent) return;
+    setDetailsOpen(false);
+    setMessages(initialMessages);
+    setBlueprint(null);
+    createAgent(`Create an agent inspired by ${selectedAgent.name}. ${selectedAgent.description} Make it customizable for my business and include ${selectedAgent.tags.join(", ")}.`);
   };
 
   return (
-    <main className="studio-shell">
-      <aside className="sidebar">
-        <div className="brand"><div className="brand-mark">M</div><div><strong>Milana</strong><span>Agent Studio</span></div></div>
-        <nav aria-label="Studio navigation">
-          {nav.map((item) => <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => setView(item.id)}><span>{item.mark}</span>{item.label}{item.id === "evaluations" && <em>{data.runs.length}</em>}</button>)}
-        </nav>
-        <div className="sidebar-foot"><div className="health-dot"/><div><strong>Multi-workflow registry</strong><span>{agents.length} agents indexed</span></div></div>
-      </aside>
-
-      <section className="workspace">
-        <header className="topbar">
-          <div><p className="eyebrow">MILANA PREMIUM · SALES AI OPERATIONS</p><h1>{view === "overview" ? "Control room" : nav.find((n) => n.id === view)?.label}</h1></div>
-          <div className="top-actions"><div className="sync-state"><span/>All changes tracked</div><label className="environment-select"><span>Environment</span><select value={environment} onChange={(e) => setEnvironment(e.target.value)}><option>Sandbox</option><option>Staging</option><option>Production</option></select></label><button className="avatar" aria-label="Workspace owner">MK</button></div>
-        </header>
-
-        {view === "overview" && <Overview agents={agents} data={data} onOpen={() => setView("registry")} />}
-        {view === "registry" && <Registry agents={visibleAgents} query={query} setQuery={setQuery} squad={squad} setSquad={setSquad} squads={squads} chooseAgent={chooseAgent} />}
-        {view === "flow" && <FlowBuilder agents={agents} notify={notify} />}
-        {view === "prompt" && <PromptLab agent={selected} editorTab={editorTab} setEditorTab={setEditorTab} systemPrompt={systemPrompt} setSystemPrompt={setSystemPrompt} routingRule={routingRule} setRoutingRule={setRoutingRule} guardrails={guardrails} setGuardrails={setGuardrails} message={message} setMessage={setMessage} result={result} busy={busy} saveVersion={saveVersion} runEvaluation={runEvaluation} promote={promote} lastVersion={lastVersion} />}
-        {view === "evaluations" && <Evaluations runs={data.runs} onRun={() => setView("flow")} />}
-        {view === "releases" && <Releases releases={data.releases} versions={data.versions} onOpen={() => setView("prompt")} />}
+    <main className="app-shell">
+      <Sidebar view={view} setView={setView} open={sidebarOpen} setOpen={setSidebarOpen} onNew={startNew} savedAgents={savedAgents} />
+      <section className="app-main">
+        <Topbar view={view} onMenu={() => setSidebarOpen(true)} model={model} setModel={setModel} blueprint={blueprint} onPublish={publish} busy={busy} />
+        {view === "marketplace" && <Marketplace query={query} setQuery={setQuery} category={category} setCategory={setCategory} filtered={filtered} onCreate={createAgent} prompt={prompt} setPrompt={setPrompt} onInstall={installAgent} />}
+        {view === "builder" && <Builder messages={messages} blueprint={blueprint} prompt={prompt} setPrompt={setPrompt} submit={submitPrompt} createAgent={createAgent} busy={busy} webEnabled={webEnabled} setWebEnabled={setWebEnabled} model={model} setModel={setModel} composerRef={composerRef} onPublish={publish} />}
+        {view === "library" && <Library agents={savedAgents} onOpen={(agent) => { setBlueprint(agent); setMessages([...initialMessages, { id: crypto.randomUUID(), role: "architect", text: `${agent.name} is open. Ask me to change its behavior, tools, knowledge, or guardrails.` }]); setView("builder"); }} onNew={startNew} />}
+        {view === "activity" && <Activity agents={savedAgents} />}
+        {view === "settings" && <Settings model={model} setModel={setModel} webEnabled={webEnabled} setWebEnabled={setWebEnabled} notify={notify} />}
       </section>
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {detailsOpen && selectedAgent && <AgentModal agent={selectedAgent} onClose={() => setDetailsOpen(false)} onUse={useTemplate} />}
+      {toast && <div className={`toast ${toast.tone}`} role="status"><span>✓</span>{toast.text}</div>}
     </main>
   );
 }
 
-function Overview({ agents, data, onOpen }: { agents: Agent[]; data: StudioData; onOpen: () => void }) {
-  const squads = Array.from(new Set(agents.map((a) => a.squad)));
-  return <div className="view overview-view">
-    <section className="hero-panel"><div><span className="live-pill"><i/> Current Kotiba architecture</span><h2>Understand the full chat<br/>before every sales answer.</h2><p>The new history analyzer reviews all available conversation context before Reasoning decides what to say next.</p><div className="hero-actions"><button className="primary" onClick={onOpen}>Open current registry <span>→</span></button><button className="secondary">View architecture</button></div></div><div className="orbit" aria-label="Current Kotiba agent orchestration diagram"><div className="orbit-ring ring-one"/><div className="orbit-ring ring-two"/><div className="orbit-core"><span>1 + 16</span><small>current system</small></div>{["Intent","Memory","History","Reasoning","Follow-up","Audit"].map((x,i)=><span key={x} className={`orbit-node node-${i+1}`}>{x}</span>)}</div></section>
-    <section className="metric-grid"><Metric label="Registry agents" value={String(agents.length)} detail="Shared and workflow-specific specialists" tone="violet"/><Metric label="Website Q&A" value="Draft" detail="Isolated from Kotiba production" tone="blue"/><Metric label="Evaluation runs" value={String(data.runs.length)} detail="Grounding · language · sales" tone="gold"/><Metric label="Live sources" value="2" detail="Website SQLite catalog · approved pages" tone="rose"/></section>
-    <section className="overview-bottom"><div className="panel squad-panel"><div className="panel-head"><div><p className="eyebrow">CURRENT CAPABILITY MAP</p><h3>{squads.length} groups, one orchestrator</h3></div><button onClick={onOpen}>View all →</button></div><div className="squad-cloud">{squads.map((name, i)=><div key={name} className="squad-chip"><span>{String(i+1).padStart(2,"0")}</span><div><strong>{name}</strong><small>{agents.filter((agent)=>agent.squad===name).length} active components</small></div></div>)}</div></div><div className="panel readiness"><p className="eyebrow">CURRENT SCOPE</p><h3>Context before response</h3><div className="readiness-score"><span>{agents.length}</span><small>registered agents</small></div><div className="progress"><i style={{width:"100%"}}/></div><ul><li className="done">Whole available chat analyzed</li><li className="done">Answered topics detected</li><li className="done">Unresolved need selected</li><li className="done">Repetitive questions blocked</li></ul></div></section>
-  </div>;
+function Sidebar({ view, setView, open, setOpen, onNew, savedAgents }: { view: View; setView: (view: View) => void; open: boolean; setOpen: (open: boolean) => void; onNew: () => void; savedAgents: Blueprint[] }) {
+  const navigate = (next: View) => { setView(next); setOpen(false); };
+  return <>
+    <div className={`sidebar-scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
+    <aside className={`sidebar ${open ? "open" : ""}`}>
+      <div className="brand-row"><button className="brand" onClick={() => navigate("marketplace")}><span className="brand-symbol">✦</span><strong>Agent Market</strong></button><button className="mobile-close" onClick={() => setOpen(false)} aria-label="Close menu">×</button></div>
+      <button className="new-agent" onClick={onNew}><Glyph>＋</Glyph><span>New agent</span><kbd>⌘ K</kbd></button>
+      <nav className="primary-nav" aria-label="Primary navigation">
+        <NavButton active={view === "marketplace"} onClick={() => navigate("marketplace")} mark="⌂" label="Discover" />
+        <NavButton active={view === "library"} onClick={() => navigate("library")} mark="◫" label="My agents" count={savedAgents.length || undefined} />
+        <NavButton active={view === "activity"} onClick={() => navigate("activity")} mark="↗" label="Activity" />
+      </nav>
+      <div className="sidebar-section">
+        <div className="section-label"><span>Recent builds</span><button aria-label="More recent builds">•••</button></div>
+        {savedAgents.slice(0, 4).map((agent) => <button className="recent-agent" key={agent.id} onClick={() => navigate("library")}><span className={`mini-avatar ${agent.accent}`}>{agent.icon}</span><span><strong>{agent.name}</strong><small>{agent.status === "published" ? "Published" : "Draft"}</small></span></button>)}
+        {!savedAgents.length && <p className="empty-recents">Your generated agents will appear here.</p>}
+      </div>
+      <div className="sidebar-spacer" />
+      <button className="upgrade-card" onClick={() => navigate("settings")}><span className="upgrade-icon">✦</span><span><strong>Creator plan</strong><small>7 days left in trial</small></span><i>↗</i></button>
+      <button className={`profile-row ${view === "settings" ? "active" : ""}`} onClick={() => navigate("settings")}><span className="user-avatar">AM</span><span><strong>Alex Morgan</strong><small>Personal workspace</small></span><Glyph>···</Glyph></button>
+    </aside>
+  </>;
 }
 
-function Metric({ label, value, detail, tone }: { label:string; value:string; detail:string; tone:string }) { return <div className={`metric-card ${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>; }
-
-function Registry({ agents, query, setQuery, squad, setSquad, squads, chooseAgent }: { agents:Agent[]; query:string; setQuery:(v:string)=>void; squad:string; setSquad:(v:string)=>void; squads:string[]; chooseAgent:(a:Agent)=>void }) {
-  return <div className="view registry-view"><div className="view-intro"><div><p className="eyebrow">SHARED AND WORKFLOW-SPECIFIC AGENTS</p><h2>Agent Registry</h2><p>Current Kotiba agents remain intact; website, comment-to-DM, and Instagram account-learning specialists are isolated as draft agents.</p></div><button className="secondary" disabled>Production agents protected</button></div><div className="registry-toolbar"><label className="search"><span>⌕</span><input aria-label="Search agents" value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search agent, group, or responsibility…"/></label><select aria-label="Filter by squad" value={squad} onChange={(e)=>setSquad(e.target.value)}>{squads.map((s)=><option key={s}>{s}</option>)}</select><button className="filter-button">Status: All</button><span className="results">{agents.length} results</span></div><div className="agent-table"><div className="agent-row table-head"><span>Agent</span><span>Group</span><span>Activation</span><span>Surface</span><span>Status</span><span/></div>{agents.map((agent)=><button className="agent-row" key={agent.id} onClick={()=>chooseAgent(agent)}><span className="agent-name"><i>{String(agent.id).padStart(3,"0")}</i><span><strong>{agent.agent}</strong><small>{agent.purpose}</small></span></span><span>{agent.squad}</span><span><b className={agent.activation === "Core fast path" ? "mode core" : agent.activation.startsWith("Async") ? "mode async" : "mode demand"}>{agent.activation}</b></span><span>{agent.surface}</span><span><b className={`status ${agent.status.toLowerCase().replaceAll(" ","-")}`}>{agent.status}</b></span><span className="arrow">→</span></button>)}</div></div>;
+function NavButton({ active, onClick, mark, label, count }: { active: boolean; onClick: () => void; mark: string; label: string; count?: number }) {
+  return <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}><Glyph>{mark}</Glyph><span>{label}</span>{count ? <em>{count}</em> : null}</button>;
 }
 
-type FlowNode = { id:string; type:"trigger"|"agent"|"router"|"knowledge"|"condition"|"guardrail"|"tool"|"output"; label:string; subtitle:string; x:number; y:number; agentId?:number };
-type FlowEdge = { id:string; from:string; to:string };
-type OwnershipState = "AI_ACTIVE"|"HUMAN_ACTIVE";
-type FlowTestResult = { status?:"pass"|"fail"; issues?:string[]; engine?:string; runId:string; input:string; output:string; latency:number; ownership:{before:OwnershipState;event:string;after:OwnershipState;aiReplyAllowed:boolean;reason:string}; history:{messages:number;language:string;intent:string;resolved:string[];unresolved:string;nextAction:string}; attachment:{name:string;format:string;size:string}; followUp:{delay:string;condition:string;output:string;status:string}; commentDelivery?:{publicReply:string;publicStatus:string;privateReply:string;privateStatus:string;eligibility:string;receipt:string;recovery:string}; learningAudit?:{coverage:string;mode:string;languages:string[];findings:Array<{title:string;detail:string;severity:"critical"|"high"|"medium"}>; protections:string[];nextStep:string}; path:Array<{label:string;detail:string;status:"passed"|"skipped"}> };
-type StoredWorkflow = { id:string; name:string; description:string; status:string; nodesJson:string; edgesJson:string; version:number; updatedAt:string };
-
-const nodeTypes: Array<{type:FlowNode["type"];label:string;mark:string}> = [
-  {type:"trigger",label:"Trigger",mark:"⚡"},{type:"agent",label:"Agent",mark:"A"},{type:"router",label:"Router",mark:"◇"},{type:"knowledge",label:"Knowledge",mark:"K"},{type:"condition",label:"Condition",mark:"?"},{type:"guardrail",label:"Guardrail",mark:"✓"},{type:"tool",label:"Tool",mark:"T"},{type:"output",label:"Output",mark:"→"},
-];
-
-function FlowBuilder({ agents, notify }: { agents:Agent[]; notify:(text:string)=>void }) {
-  const [nodes, setNodes] = useState<FlowNode[]>(milanaInstagramAccountLearningWorkflow.nodes as FlowNode[]);
-  const [edges, setEdges] = useState<FlowEdge[]>(milanaInstagramAccountLearningWorkflow.edges);
-  const [savedNodes, setSavedNodes] = useState<FlowNode[]>(milanaInstagramAccountLearningWorkflow.nodes as FlowNode[]);
-  const [savedEdges, setSavedEdges] = useState<FlowEdge[]>(milanaInstagramAccountLearningWorkflow.edges);
-  const [selectedNodeId, setSelectedNodeId] = useState("learn_trigger");
-  const [flowName, setFlowName] = useState(milanaInstagramAccountLearningWorkflow.name);
-  const [flowDescription, setFlowDescription] = useState(milanaInstagramAccountLearningWorkflow.description);
-  const [flowId, setFlowId] = useState<string>(MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID);
-  const [flowStatus, setFlowStatus] = useState("draft");
-  const [flowVersion, setFlowVersion] = useState(1);
-  const [workflows, setWorkflows] = useState<StoredWorkflow[]>([]);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createName, setCreateName] = useState("New reusable agent workflow");
-  const [createTemplate, setCreateTemplate] = useState<keyof typeof workflowTemplates>("universal");
-  const [saving, setSaving] = useState(false);
-  const [drag, setDrag] = useState<null|{id:string;offsetX:number;offsetY:number}>(null);
-  const [running, setRunning] = useState(false);
-  const [testResult, setTestResult] = useState<FlowTestResult|null>(null);
-  const [simulatedOwnership, setSimulatedOwnership] = useState<OwnershipState>("AI_ACTIVE");
-  const [testScenario, setTestScenario] = useState("catalog_request");
-  const selectedNode = nodes.find((node)=>node.id===selectedNodeId) ?? nodes[0];
-  const locked = flowStatus === "production_locked" || flowId === CURRENT_WORKFLOW_ID;
-
-  const loadWorkflow=(workflow:StoredWorkflow)=>{
-    const nextNodes=JSON.parse(workflow.nodesJson) as FlowNode[];
-    const nextEdges=JSON.parse(workflow.edgesJson) as FlowEdge[];
-    setNodes(nextNodes);setEdges(nextEdges);setSavedNodes(nextNodes);setSavedEdges(nextEdges);setSelectedNodeId(nextNodes[0]?.id||"");
-    setFlowId(workflow.id);setFlowName(workflow.name);setFlowDescription(workflow.description);
-    setFlowStatus(workflow.status);setFlowVersion(workflow.version||1);setTestResult(null);
-  };
-
-  const refreshWorkflows=async(preferredId?:string)=>{
-    const response=await fetch("/api/flows");
-    if(!response.ok)throw new Error("Could not load workflows");
-    const payload=await response.json() as {workflows:StoredWorkflow[]};
-    setWorkflows(payload.workflows||[]);
-    const next=(payload.workflows||[]).find((item)=>item.id===(preferredId||flowId))
-      ||(payload.workflows||[]).find((item)=>item.id===UNIVERSAL_WORKFLOW_ID)
-      ||payload.workflows?.[0];
-    if(next)loadWorkflow(next);
-  };
-
-  useEffect(()=>{refreshWorkflows(MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID).catch(()=>notify("Workflow library could not be loaded"));},[]);
-
-  useEffect(()=>{
-    if (!drag) return;
-    const move=(event:PointerEvent)=>setNodes((current)=>current.map((node)=>node.id===drag.id?{...node,x:Math.max(8,Math.min(2100,event.clientX-drag.offsetX)),y:Math.max(18,Math.min(500,event.clientY-drag.offsetY))}:node));
-    const up=()=>setDrag(null);
-    window.addEventListener("pointermove",move); window.addEventListener("pointerup",up);
-    return()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};
-  },[drag]);
-
-  const addNode=(type:FlowNode["type"])=>{
-    if(locked)return notify("The production snapshot is locked. Create a new workflow to edit.");
-    const definition=nodeTypes.find((item)=>item.type===type)!;
-    const id=`${type}_${crypto.randomUUID().slice(0,8)}`;
-    const last=nodes[nodes.length-1];
-    const node:FlowNode={id,type,label:type==="agent"?"Select an agent":definition.label,subtitle:type==="agent"?"Unassigned specialist":"New workflow step",x:Math.min(1000,80+(nodes.length%4)*245),y:80+Math.floor(nodes.length/4)*165};
-    setNodes((current)=>[...current,node]);
-    if(last)setEdges((current)=>[...current,{id:`edge_${crypto.randomUUID().slice(0,8)}`,from:last.id,to:id}]);
-    setSelectedNodeId(id);
-  };
-  const updateNode=(changes:Partial<FlowNode>)=>{
-    if(locked)return;
-    setNodes((current)=>current.map((node)=>node.id===selectedNodeId?{...node,...changes}:node));
-  };
-  const assignAgent=(value:string)=>{const agent=agents.find((item)=>String(item.id)===value);if(agent)updateNode({agentId:agent.id,label:agent.agent,subtitle:`Agent ${String(agent.id).padStart(3,"0")} · ${agent.activation}`})};
-  const saveFlow=async()=>{
-    if(locked)return notify("This production snapshot is locked and already saved.");
-    setSaving(true);
-    try{
-      const response=await fetch("/api/flows",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:flowId,name:flowName,description:flowDescription,nodes,edges})});
-      const payload=await response.json() as {id?:string;version?:number;error?:string};
-      if(!response.ok)return notify(payload.error||"Workflow save failed");
-      setFlowId(payload.id!);setFlowVersion(payload.version||flowVersion);notify(`Workflow v${payload.version||flowVersion} saved`);
-      await refreshWorkflows(payload.id);
-    }finally{setSaving(false)}
-  };
-  const createWorkflow=async()=>{
-    const template=workflowTemplates[createTemplate] as WorkflowTemplate;
-    const freshNodes=(template.nodes as FlowNode[]).map((node)=>({...node,id:`${node.id}_${crypto.randomUUID().slice(0,6)}`}));
-    const idMap=new Map(template.nodes.map((node,index)=>[node.id,freshNodes[index].id]));
-    const freshEdges=template.edges.map((edge)=>({...edge,id:`edge_${crypto.randomUUID().slice(0,8)}`,from:idMap.get(edge.from)!,to:idMap.get(edge.to)!}));
-    const response=await fetch("/api/flows",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:createName.trim()||template.name,description:template.description,nodes:freshNodes,edges:freshEdges})});
-    const payload=await response.json() as {id?:string;error?:string};
-    if(!response.ok)return notify(payload.error||"Could not create workflow");
-    setCreateOpen(false);notify("New draft workflow created");await refreshWorkflows(payload.id);
-  };
-  const runLegacyFlow=()=>{
-    setRunning(true);
-    setTestResult(null);
-    window.setTimeout(()=>{
-      const humanOwned=simulatedOwnership==="HUMAN_ACTIVE";
-      const websiteFlow=flowId===MILANA_WEBSITE_QA_WORKFLOW_ID;
-      const commentFlow=flowId===MILANA_INSTAGRAM_COMMENTS_WORKFLOW_ID;
-      const learningFlow=flowId===MILANA_INSTAGRAM_LEARNING_WORKFLOW_ID;
-      const path=nodes.filter((node)=>learningFlow||node.type==="agent"||node.id==="tool_catalog"||node.id==="ownership_gate"||node.type==="knowledge"||node.id==="web_customer_data"||node.id==="comment_dedupe"||node.id==="comment_dm_gate").map((node)=>({
-        label:node.label,
-        detail:node.id==="ownership_gate"?(humanOwned?"Detected a non-AI outbound message; AI and pending follow-ups are blocked until explicit resume":"Ownership is AI_ACTIVE; workflow may continue"):humanOwned?"Skipped because the conversation is HUMAN_ACTIVE":node.id==="comment_dedupe"?"Webhook signature accepted; comment ID and private-reply idempotency key are new":node.id==="comment_post_context"?"Loaded the originating reel, caption, TJ-2026 product facts, and approved catalog":node.agentId===26?"Detected Uzbek price + catalog intent and requested public reply plus private reply":node.agentId===27?"Removed private order details and approved a short public acknowledgement":node.agentId===28?"Composed the public response in the commenter's current language":node.agentId===29?"Confirmed professional account, permission, allowed window, no duplicate, no opt-out, and AI ownership":node.id==="comment_dm_gate"?"Private reply is eligible; continue with the originating comment ID":node.agentId===30?"Submitted one idempotent private reply and retained the Meta API response":node.agentId===31?"Verified the accepted message ID; public and private delivery states are both complete":node.id==="web_catalog"?"Queried the live SQLite catalog and filtered to active products":node.id==="web_policy"?"Loaded approved ordering, support, terms, privacy, and partnership content":node.id==="web_customer_data"?"No customer-private data requested; authenticated scope stayed closed":node.agentId===25?"Compared the answer against source precedence and blocked stale policy claims":node.agentId===18?"Selected only catalog retrieval, stock/pack/price, and response composition":node.agentId===19?"Found model TJ-2182 / V-4607 in the active website catalog":node.agentId===20?"Verified $7.30 unit price, sizes 46–54, pack of 5, and tracked bag availability":node.agentId===21?"Skipped because the customer asked about a known model":node.agentId===22?"Skipped because no policy question was asked":node.agentId===23?"Skipped because no authenticated order or account operation was requested":node.agentId===24?"Composed a concise Uzbek answer with a product card and no unsupported guarantees":node.agentId===1?"Selected the catalog-delivery sales path":node.agentId===2?"Detected an Uzbek product and price request":node.agentId===6?(commentFlow?"Linked the public comment and verified private reply to one customer journey":"Loaded customer identity and saved preferences"):node.agentId===17?(commentFlow?"Reviewed prior comments, DMs, language, ownership, and duplicate-send state":"Reviewed the full available session and found an unresolved product question"):node.agentId===8?"Used history analysis to choose immediate catalog delivery without repeating questions":node.id==="tool_catalog"?"Attached the current approved Milana Premium catalog":node.agentId===10?(commentFlow?"Skipped because delivery succeeded and no sensitive handoff is required":"No manager handoff required"):node.agentId===11?(commentFlow?"Recorded public reply ID, private message receipt, eligibility decision, and final state":"Recorded the simulated decision, sources, and result"):node.agentId===16?"Scheduled one follow-up for +5 minutes; cancel on any customer reply":"Completed its assigned workflow step",
-        status:(node.id==="ownership_gate"?"passed":humanOwned||node.agentId===10?"skipped":"passed") as "passed"|"skipped",
-      }));
-      const learningDetails:Record<string,string>={
-        "Instagram read-only ingestion":"Loaded the approved profile, post, comment, DM, ad-referral, catalog, receipt, ownership, and outcome sample.",
-        "Read-Only Access Fence":"Enforced zero-send mode: no replies, reactions, labels, deletes, or account changes.",
-        "Instagram Account Learning Agent":"Clustered recurring customer intents, response failures, and successful human examples.",
-        "Conversation History Analyzer":"Reviewed each complete available thread before extracting a learning example.",
-        "External Sync Agent":"Separated human and automated outbound events before assigning ownership.",
-        "Normalized Account Event Store":"Created one normalized timeline for comments, DMs, ads, catalogs, receipts, and outcomes.",
-        "Customer Identity & Event Correlation Agent":"Joined comment, customer identity, private reply, DM thread, catalog receipt, ad referral, and lead state.",
-        "Language & Script Lock Agent":"Detected Uzbek Latin, Uzbek Cyrillic, Russian, and Kazakh continuity failures.",
-        "Instagram Sales Truth Agent":"Flagged unsupported MOQ, pack, price, size, delivery, and address claims for verification.",
-        "Advertisement & Post Context Agent":"Attached the originating reel, post, product, CTA, and campaign to each journey.",
-        "Catalog Fulfillment Agent":"Separated catalog requested, selected, dispatched, accepted, and delivered states.",
-        "Action Claim Validator Agent":"Blocked “sent by DM” claims when no matching delivery receipt exists.",
-        "Conversation Prerequisite Agent":"Flagged phone requests and follow-ups that skipped unresolved catalog or product questions.",
-        "Inbox SLA & Missed Lead Recovery Agent":"Created a review queue for unread questions, failed sends, and overdue leads.",
-        "Privacy & Learning Dataset Curator Agent":"Redacted phone numbers and personal data, then labeled examples for approval.",
-        "Human Learning Approval":"Held every prompt and routing change for explicit human approval.",
-        "Account Intelligence Report":"Produced sanitized findings, evaluation cases, agent changes, and coverage gaps.",
-        "Audit Log Agent":"Recorded source coverage, redaction decisions, findings, and approval state.",
-      };
-      const learningPath=path.map((step)=>({...step,detail:learningDetails[step.label]||step.detail,status:"passed" as const}));
-      setTestResult({
-        runId:`SIM-${Date.now().toString().slice(-6)}`,
-        input:commentFlow?"TJ-2026 narxi qancha? Katalogni Direktga yuboring.":websiteFlow?"Salom, TJ-2182 narxi, razmerlari va eng kam buyurtmasi qancha?":"Salom, yangi katalogni yubora olasizmi?",
-        output:humanOwned?"":commentFlow?"Assalomu alaykum! TJ-2026 bo‘yicha narx va katalogni Direktga yubordik 😊":websiteFlow?"TJ-2182 (V-4607) tunikasi — $7.30/dona. Razmerlari: 46, 48, 50, 52, 54. Eng kam ulgurji buyurtma 1 qadoq — 5 dona, har razmerdan bittadan. Ombor qoldig‘i o‘zgarishi mumkin; yakuniy mavjudlikni buyurtma vaqtida tekshiramiz.":"Assalomu alaykum! Albatta — yangi katalogimizni ilova qildim. Sizga yoqqan modelning rasmi yoki artikulini yuboring, narxi va buyurtma shartlarini tekshirib beraman.",
-        ownership:{before:humanOwned?"AI_ACTIVE":simulatedOwnership,event:humanOwned?"Human outbound detected":"Inbound customer message",after:simulatedOwnership,aiReplyAllowed:!humanOwned,reason:humanOwned?"Human owns this conversation. Only an authenticated Return to AI action can resume automation.":"No human takeover is active."},
-        history:commentFlow?{messages:5,language:"Uzbek",intent:"Product price and catalog requested from a public comment",resolved:["Post context loaded","No previous private reply","AI ownership confirmed"],unresolved:"Public reply and private reply require separate verified delivery outcomes",nextAction:"Publish a safe acknowledgement, then send one eligible private reply and verify its receipt"}:websiteFlow?{messages:8,language:"Uzbek",intent:"Verify a specific product's price, sizes, and minimum order",resolved:["Customer language known","Model code supplied"],unresolved:"Verified product facts must be returned without using the obsolete generic six-piece rule",nextAction:"Query the active catalog, use the model's actual five-size pack, and answer directly"}:{messages:12,language:"Uzbek",intent:"Receive the latest catalog",resolved:["Greeting answered","Wholesale interest recorded","Customer language known"],unresolved:"The requested catalog has not yet been delivered",nextAction:"Send the catalog now; do not ask again for phone number or product type"},
-        attachment:humanOwned?{name:"Output suppressed",format:"No attachment",size:"Human-owned conversation"}:commentFlow?{name:"Meta private reply receipt",format:"Instagram message ID",size:"Verified in simulation"}:websiteFlow?{name:"TJ-2182 · V-4607",format:"Website product card",size:"Live catalog result"}:{name:"Milana Premium — Latest Catalog.pdf",format:"PDF catalog",size:"Simulation attachment"},
-        followUp:humanOwned?{delay:"Not scheduled",condition:"Human takeover cancels pending automation",output:"No follow-up will be sent while the conversation is human-owned.",status:"Cancelled"}:commentFlow?{delay:"Wait for customer reply",condition:"Do not send another automated DM until the customer responds and messaging policy allows it",output:"The private reply opens the conversation; further automation stays paused until the customer replies.",status:"Policy gated"}:websiteFlow?{delay:"Not scheduled",condition:"Website Q&A sends no unsolicited follow-up by default",output:"The customer can continue in the same website session or request a manager.",status:"Cancelled"}:{delay:"5 minutes after catalog",condition:"Send only if no customer reply, handoff, opt-out, or order activity",output:"Katalogni ko‘rib chiqishga ulgurdingizmi? Sizga yoqqan modelning rasmi yoki artikulini yuborsangiz, narxi va buyurtma shartlarini tekshirib beraman.",status:"Scheduled"},
-        commentDelivery:commentFlow?{publicReply:humanOwned?"Suppressed — human owns the conversation":"Assalomu alaykum! TJ-2026 bo‘yicha narx va katalogni Direktga yubordik 😊",publicStatus:humanOwned?"Blocked":"Published · reply ID stored",privateReply:humanOwned?"Suppressed — human owns the conversation":"Salom! TJ-2026 modelining tasdiqlangan narxi va yangi katalog shu yerda. Sizga kerakli son va o‘lchamlarni yozsangiz, buyurtma shartlarini tekshirib beramiz.",privateStatus:humanOwned?"Blocked":"Accepted · message ID verified",eligibility:humanOwned?"Ineligible while HUMAN_ACTIVE":"Eligible · sales intent · allowed window · no duplicate",receipt:humanOwned?"No API call":"mid.simulated_comment_private_reply_8421",recovery:humanOwned?"Return to AI or let the operator respond":"Not required"}:undefined,
-        ...(learningFlow?{
-          input:"Read-only audit: learn from posts, comments, DMs, ad referrals, catalog receipts, ownership, and outcomes.",
-          output:"Account intelligence report ready for human review. No Instagram action or production prompt change was performed.",
-          ownership:{before:simulatedOwnership,event:"Read-only account ingestion",after:simulatedOwnership,aiReplyAllowed:true,reason:"Learning may inspect approved history, but it cannot send messages or change prompts automatically."},
-          history:{messages:36,language:"Multilingual account sample",intent:"Build an approved account-learning dataset",resolved:["Profile and channel context loaded","Human and AI events separated","No live-send permission"],unresolved:"Complete historical coverage requires Meta API backfill and ongoing webhooks",nextAction:"Review the sanitized findings, approve the evaluation set, then connect read-only ingestion"},
-          attachment:{name:"Milana Instagram Intelligence Report",format:"Sanitized review artifact",size:"5 findings · 4 language groups"},
-          followUp:{delay:"Not scheduled",condition:"Learning never triggers customer outreach",output:"Findings remain in the review queue until a human approves prompt, routing, or evaluation changes.",status:"Approval gated"},
-          learningAudit:{
-            coverage:"Profile · 177 posts · recent comments · Primary/General/From Ads/Requests sample",
-            mode:"Read-only · 0 sends · 0 automatic prompt changes",
-            languages:["Uzbek Latin","Uzbek Cyrillic","Russian","Kazakh"],
-            findings:[
-              {title:"False DM completion claims",detail:"Public replies can say a DM or catalog was sent before a matching delivery receipt exists.",severity:"critical" as const},
-              {title:"Catalog intent is lost",detail:"A catalog request can become a generic phone-number request instead of verified catalog fulfillment.",severity:"high" as const},
-              {title:"Language and script drift",detail:"Kazakh and Russian customers can receive Uzbek or English templates that ignore the full conversation.",severity:"high" as const},
-              {title:"Prerequisites are skipped",detail:"Follow-ups can ask whether a catalog was reviewed without confirmed catalog delivery.",severity:"high" as const},
-              {title:"Missed lead queue",detail:"Unread location, size, and product questions need SLA monitoring and recovery.",severity:"medium" as const},
-            ],
-            protections:["Phone numbers and PII redacted","Human and AI events separated","Learning examples require approval","Kotiba production untouched"],
-            nextStep:"Connect Meta read-only backfill and webhooks, then run the sanitized evaluation set before enabling any send action.",
-          },
-        }:{}),
-        latency:1840,
-        path:learningFlow?learningPath:path,
-      });
-      setRunning(false);
-      if(learningFlow){
-        notify("Account-learning simulation completed — findings are ready for review");
-        window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
-        return;
-      }
-      notify(humanOwned?"Flow simulation completed — AI correctly suppressed":commentFlow?"Comment-to-DM simulation completed — both delivery states are visible":websiteFlow?"Website Q&A simulation completed — grounded output is ready":"Flow simulation completed — output is ready");
-      window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
-    },2200);
-  };
-  void runLegacyFlow;
-  const runFlow=async()=>{
-    setRunning(true);setTestResult(null);
-    try{
-      const response=await fetch("/api/flow-test",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({nodes,edges,scenario:testScenario,ownership:simulatedOwnership})});
-      const payload=await response.json() as FlowTestResult&{error?:string};
-      if(!response.ok&&response.status!==422)throw new Error(payload.error||"Flow test failed");
-      setTestResult(payload);
-      notify(payload.status==="fail"?"Workflow test failed — missing or invalid graph controls":"Graph-derived workflow test passed");
-      window.setTimeout(()=>document.getElementById("flow-test-output")?.scrollIntoView({behavior:"smooth",block:"nearest"}),80);
-    }catch(error){notify(error instanceof Error?error.message:"Flow test failed")}
-    finally{setRunning(false)}
-  };
-  const nodeCenter=(id:string)=>{const node=nodes.find((item)=>item.id===id);return node?{x:node.x+86,y:node.y+42}:{x:0,y:0}};
-
-  return <div className="view flow-view">
-    <div className="workflow-library-bar"><label><span>Workflow</span><select aria-label="Choose workflow" value={flowId} onChange={(event)=>{const workflow=workflows.find((item)=>item.id===event.target.value);if(workflow)loadWorkflow(workflow)}}>{workflows.map((workflow)=><option key={workflow.id} value={workflow.id}>{workflow.status==="production_locked"?"🔒 ":""}{workflow.name}</option>)}</select></label><div><span>{workflows.length} saved workflows</span><button className="primary create-workflow-button" onClick={()=>setCreateOpen(true)}>＋ Create new workflow</button></div></div>
-    <div className="flow-titlebar"><div><p className="eyebrow">VISUAL ORCHESTRATION</p><input aria-label="Workflow name" value={flowName} readOnly={locked} onChange={(e)=>setFlowName(e.target.value)}/><p>{flowDescription}</p></div><div><span className={`sandbox-badge ${locked?"locked":""}`}>{locked?"Saved production snapshot":`Draft · v${flowVersion}`}</span><button className="secondary" onClick={runFlow} disabled={running}>{running?"Running…":"▶ Test flow"}</button><button className="primary" onClick={saveFlow} disabled={locked||saving}>{locked?"Snapshot saved":saving?"Saving…":"Save workflow"}</button></div></div>
-    {locked&&<div className="workflow-lock-note"><span>🔒</span><div><strong>This workflow is preserved exactly as it was.</strong><p>Testing is allowed, but editing and overwriting are blocked. Use Create new workflow for changes.</p></div></div>}
-    <section className={`ownership-simulator ${simulatedOwnership==="HUMAN_ACTIVE"?"human":"ai"}`}><div><p className="eyebrow">CONVERSATION OWNERSHIP TEST</p><strong>{simulatedOwnership==="AI_ACTIVE"?"AI owns the conversation":"Human owns the conversation"}</strong><span>{simulatedOwnership==="AI_ACTIVE"?"AI replies and catalog follow-ups are allowed.":"AI replies and pending follow-ups must remain blocked."}</span></div><label className="scenario-select"><span>Regression scenario</span><select value={testScenario} onChange={(event)=>{setTestScenario(event.target.value);setSimulatedOwnership(event.target.value==="human_takeover"?"HUMAN_ACTIVE":"AI_ACTIVE")}}><option value="catalog_request">Catalog requested</option><option value="human_takeover">Human takeover</option><option value="comment_duplicate">Repeated comment / duplicate DM</option><option value="cyrillic_uzbek">Uzbek Cyrillic continuity</option><option value="unverified_moq">Unverified minimum quantity</option></select></label><div><button className={simulatedOwnership==="AI_ACTIVE"?"active":""} onClick={()=>{setSimulatedOwnership("AI_ACTIVE");setTestScenario("catalog_request")}}>Return to AI</button><button className={simulatedOwnership==="HUMAN_ACTIVE"?"active":""} onClick={()=>{setSimulatedOwnership("HUMAN_ACTIVE");setTestScenario("human_takeover")}}>Simulate human reply</button></div></section>
-    <div className="flow-layout">
-      <aside className="node-palette"><p>ADD NODE</p>{nodeTypes.map((item)=><button key={item.type} disabled={locked} onClick={()=>addNode(item.type)}><i className={`node-icon ${item.type}`}>{item.mark}</i><span><strong>{item.label}</strong><small>{item.type==="agent"?`Choose from ${agents.length} registered agents`:item.type==="knowledge"?"Uploaded files and catalog":item.type==="guardrail"?"Validate before next step":"Workflow building block"}</small></span><b>＋</b></button>)}</aside>
-      <section className={`flow-canvas ${locked?"is-locked":""}`} aria-label="Visual agent workflow canvas">
-        <div className="canvas-toolbar"><span>100%</span><button>−</button><button>＋</button><button disabled={locked} onClick={()=>{setNodes(savedNodes);setEdges(savedEdges);setSelectedNodeId(savedNodes[0]?.id||"")}}>Reset</button></div>
-        <svg className="flow-connections" aria-hidden="true" width="2250" height="610" viewBox="0 0 2250 610">{edges.map((edge)=>{const a=nodeCenter(edge.from),b=nodeCenter(edge.to),curve=Math.max(55,(b.x-a.x)*.45);return <path key={edge.id} className={running?"running":""} d={`M ${a.x} ${a.y} C ${a.x+curve} ${a.y}, ${b.x-curve} ${b.y}, ${b.x} ${b.y}`}/>})}</svg>
-        {nodes.map((node)=><div key={node.id} role="button" tabIndex={0} className={`flow-node ${node.type} ${node.id===selectedNodeId?"selected":""} ${running?"is-running":""}`} style={{left:node.x,top:node.y}} onClick={()=>setSelectedNodeId(node.id)} onPointerDown={(event)=>{setSelectedNodeId(node.id);if(!locked)setDrag({id:node.id,offsetX:event.clientX-node.x,offsetY:event.clientY-node.y})}}><span className={`node-icon ${node.type}`}>{nodeTypes.find((item)=>item.type===node.type)?.mark}</span><div><strong>{node.label}</strong><small>{node.subtitle}</small></div><i className="port input"/><i className="port output"/></div>)}
-      </section>
-      <aside className="node-inspector"><p>{locked?"SNAPSHOT DETAILS":"NODE SETTINGS"}</p><label>Node label<input disabled={locked} value={selectedNode.label} onChange={(e)=>updateNode({label:e.target.value})}/></label><label>Type<select disabled={locked} value={selectedNode.type} onChange={(e)=>updateNode({type:e.target.value as FlowNode["type"]})}>{nodeTypes.map((item)=><option key={item.type} value={item.type}>{item.label}</option>)}</select></label>{selectedNode.type==="agent"&&<label>Assigned agent<select disabled={locked} value={selectedNode.agentId||""} onChange={(e)=>assignAgent(e.target.value)}><option value="">Choose specialist…</option>{agents.map((agent)=><option key={agent.id} value={agent.id}>{String(agent.id).padStart(3,"0")} · {agent.agent}</option>)}</select></label>}<label>Description<textarea disabled={locked} value={selectedNode.subtitle} onChange={(e)=>updateNode({subtitle:e.target.value})}/></label><div className="inspector-stat"><span>Incoming</span><b>{edges.filter((edge)=>edge.to===selectedNode.id).length}</b></div><div className="inspector-stat"><span>Outgoing</span><b>{edges.filter((edge)=>edge.from===selectedNode.id).length}</b></div><button className="danger-button" disabled={locked} onClick={()=>{setNodes((current)=>current.filter((node)=>node.id!==selectedNode.id));setEdges((current)=>current.filter((edge)=>edge.from!==selectedNode.id&&edge.to!==selectedNode.id));setSelectedNodeId(nodes[0]?.id)}}>Remove node</button></aside>
-    </div>
-    {(running||testResult)&&<section id="flow-test-output" className={`flow-test-output ${running?"is-running":""}`} aria-live="polite">
-      {running?<div className="run-progress"><span className="run-spinner"/><div><p className="eyebrow">TEST RUN IN PROGRESS</p><h3>Executing the current workflow…</h3><p>Tracing every agent decision. No live Instagram message will be sent.</p></div></div>:testResult&&<>
-        <header className="run-result-head"><div><span className={`run-status ${testResult.status==="fail"?"failed":""}`}>{testResult.status==="fail"?"! Failed":"✓ Passed"}</span><h3>Graph-derived test output</h3><p>{testResult.engine||"Workflow runner"} executed only nodes and connections present in this saved graph.</p></div><div className="run-meta"><span><small>Run</small><strong>{testResult.runId}</strong></span><span><small>Latency</small><strong>{testResult.latency}ms</strong></span><span><small>Steps</small><strong>{testResult.path.length}</strong></span><span><small>Live sends</small><strong>0</strong></span></div></header>
-        {!!testResult.issues?.length&&<div className="flow-validation-errors"><strong>Release-blocking graph issues</strong>{testResult.issues.map((issue)=><span key={issue}>• {issue}</span>)}</div>}
-        <div className="run-result-grid">
-          <div className="run-conversation">
-            <p className="eyebrow">CONVERSATION PREVIEW</p>
-            <div className={`ownership-result ${testResult.ownership.aiReplyAllowed?"ai":"human"}`}><header><div><span>OWNERSHIP GATE</span><strong>{testResult.ownership.after}</strong></div><b>{testResult.ownership.aiReplyAllowed?"AI allowed":"AI blocked"}</b></header><p>{testResult.ownership.reason}</p><small>Event: {testResult.ownership.event} · Previous: {testResult.ownership.before}</small></div>
-            <div className="history-analysis"><header><div><span>HISTORY ANALYZER</span><strong>{testResult.history.messages} messages reviewed</strong></div><b>Complete</b></header><div className="history-facts"><span><small>Language</small><strong>{testResult.history.language}</strong></span><span><small>Current intent</small><strong>{testResult.history.intent}</strong></span></div><p><b>Resolved:</b> {testResult.history.resolved.join(" · ")}</p><p><b>Unresolved:</b> {testResult.history.unresolved}</p><footer><span>Recommended next action</span><strong>{testResult.history.nextAction}</strong></footer></div>
-            <div className="test-message customer"><span>Customer comment</span><p>{testResult.input}</p></div>
-            {testResult.learningAudit ? <section className="learning-audit-result">
-              <header><div><span>ACCOUNT LEARNING REPORT</span><strong>{testResult.learningAudit.coverage}</strong></div><b>{testResult.learningAudit.mode}</b></header>
-              <div className="learning-language-row">{testResult.learningAudit.languages.map((language)=><span key={language}>{language}</span>)}</div>
-              <div className="learning-findings">{testResult.learningAudit.findings.map((finding)=><article key={finding.title} className={finding.severity}><div><b>{finding.severity}</b><strong>{finding.title}</strong></div><p>{finding.detail}</p></article>)}</div>
-              <div className="learning-protections">{testResult.learningAudit.protections.map((protection)=><span key={protection}>✓ {protection}</span>)}</div>
-              <footer><span>SAFE NEXT STEP</span><strong>{testResult.learningAudit.nextStep}</strong></footer>
-            </section> : testResult.commentDelivery ? <div className="comment-delivery-grid">
-              <article className="delivery-card public"><header><span>PUBLIC COMMENT</span><b>{testResult.commentDelivery.publicStatus}</b></header><p>{testResult.commentDelivery.publicReply}</p><small>Public and private sends have independent status.</small></article>
-              <article className="delivery-card private"><header><span>PRIVATE REPLY / DM</span><b>{testResult.commentDelivery.privateStatus}</b></header><p>{testResult.commentDelivery.privateReply}</p><dl><div><dt>Eligibility</dt><dd>{testResult.commentDelivery.eligibility}</dd></div><div><dt>Receipt</dt><dd>{testResult.commentDelivery.receipt}</dd></div><div><dt>Recovery</dt><dd>{testResult.commentDelivery.recovery}</dd></div></dl></article>
-            </div> : testResult.ownership.aiReplyAllowed ? <div className="test-message agent"><span>Milana AI</span><p>{testResult.output}</p><div className="catalog-attachment"><i>PDF</i><div><strong>{testResult.attachment.name}</strong><span>{testResult.attachment.format} · {testResult.attachment.size}</span></div><b>Attached ✓</b></div><button onClick={()=>{navigator.clipboard?.writeText(testResult.output);notify("Output copied")}}>Copy output</button></div> : <div className="test-message suppressed"><span>Milana AI</span><strong>No reply generated</strong><p>The customer message remains visible to the human operator. Automation resumes only after an approved Return to AI action.</p></div>}
-            <div className={`followup-preview ${testResult.followUp.status==="Cancelled"?"cancelled":""}`}><header><div><span>{testResult.learningAudit?"LEARNING SAFETY":testResult.commentDelivery?"MESSAGING POLICY":"FOLLOW-UP AGENT"}</span><strong>{testResult.followUp.delay}</strong></div><b>{testResult.followUp.status}</b></header><p>{testResult.followUp.output}</p><small>✓ {testResult.followUp.condition}</small></div>
-            <div className="simulation-note">Simulation only · {testResult.learningAudit?"Account coverage, sanitized findings, approval gates, and recommended integrations are previewed":"Public reply, private-reply eligibility, API receipt, ownership, and recovery behavior are previewed"}; nothing was sent to Instagram</div>
-          </div>
-          <div className="run-trace"><p className="eyebrow">EXECUTION TRACE</p>{testResult.path.map((step,index)=><div className={`trace-step ${step.status}`} key={`${step.label}-${index}`}><i>{step.status==="passed"?"✓":"–"}</i><div><strong>{step.label}</strong><span>{step.detail}</span></div><small>{step.status}</small></div>)}</div>
-        </div>
-      </>}
-    </section>}
-    {createOpen&&<div className="workflow-modal-backdrop" role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget)setCreateOpen(false)}}><section className="workflow-modal" role="dialog" aria-modal="true" aria-labelledby="create-workflow-title"><header><div><p className="eyebrow">WORKFLOW LIBRARY</p><h3 id="create-workflow-title">Create new workflow</h3><p>Start separately from the locked Kotiba production snapshot.</p></div><button className="modal-close" aria-label="Close" onClick={()=>setCreateOpen(false)}>×</button></header><label>Workflow name<input autoFocus value={createName} onChange={(event)=>setCreateName(event.target.value)}/></label><fieldset><legend>Starting point</legend><div className="workflow-template-grid">{([
-      ["universal","Universal omnichannel","Website, bots, API, automations, ChatGPT, Claude, and MCP"],
-      ["website","Website Q&A","Grounded answers from approved pages, files, and business facts"],
-      ["comments","Instagram Comments → DM","Public replies, private-reply eligibility, verified DM delivery, and recovery"],
-      ["learning","Instagram Account Learning","Read-only account ingestion, cross-channel correlation, sanitized findings, and human approval"],
-      ["blank","Blank canvas","A simple input → agent selector → output foundation"],
-    ] as const).map(([id,title,description])=><label key={id} className={createTemplate===id?"selected":""}><input type="radio" name="workflow-template" checked={createTemplate===id} onChange={()=>{setCreateTemplate(id);setCreateName(workflowTemplates[id].name)}}/><span><strong>{title}</strong><small>{description}</small></span></label>)}</div></fieldset><footer><button className="secondary" onClick={()=>setCreateOpen(false)}>Cancel</button><button className="primary" onClick={createWorkflow}>Create draft workflow</button></footer></section></div>}
-  </div>;
+function Topbar({ view, onMenu, model, setModel, blueprint, onPublish, busy }: { view: View; onMenu: () => void; model: string; setModel: (model: string) => void; blueprint: Blueprint | null; onPublish: () => void; busy: boolean }) {
+  const titles: Record<View, string> = { marketplace: "Discover", builder: blueprint?.name || "Agent Builder", library: "My agents", activity: "Activity", settings: "Settings" };
+  return <header className="topbar"><div className="topbar-title"><button className="menu-button" onClick={onMenu} aria-label="Open menu">☰</button><span className="mobile-brand">✦</span><strong>{titles[view]}</strong>{view === "builder" && <span className="draft-pill">Draft</span>}</div><div className="topbar-actions">{view === "builder" && <><label className="model-picker top-model"><span className="status-dot" /> <select aria-label="Model" value={model} onChange={(event) => setModel(event.target.value)}><option>Auto</option><option>Fast</option><option>Powerful</option></select></label><button className="icon-button" aria-label="Share">↗</button><button className="publish-button" onClick={onPublish} disabled={!blueprint || busy}>{blueprint?.status === "published" ? "Published" : "Publish"}</button></>} {view !== "builder" && <><button className="icon-button search-top" aria-label="Search">⌕</button><button className="avatar-button">AM</button></>}</div></header>;
 }
 
-function PromptLab({ agent, editorTab, setEditorTab, systemPrompt, setSystemPrompt, routingRule, setRoutingRule, guardrails, setGuardrails, message, setMessage, result, busy, saveVersion, runEvaluation, promote, lastVersion }: { agent:Agent; editorTab:"prompt"|"routing"|"guardrails"; setEditorTab:(v:"prompt"|"routing"|"guardrails")=>void; systemPrompt:string; setSystemPrompt:(v:string)=>void; routingRule:string; setRoutingRule:(v:string)=>void; guardrails:string; setGuardrails:(v:string)=>void; message:string; setMessage:(v:string)=>void; result:null|{text:string;scores:number[];latency:number}; busy:boolean; saveVersion:()=>void; runEvaluation:()=>void; promote:()=>void; lastVersion:{id:string;version:number}|null }) {
-  const activeText = editorTab === "prompt" ? systemPrompt : editorTab === "routing" ? routingRule : guardrails;
-  const setActive = editorTab === "prompt" ? setSystemPrompt : editorTab === "routing" ? setRoutingRule : setGuardrails;
-  const [promptAnalysis,setPromptAnalysis]=useState<null|{score:number;checks:Array<{name:string;pass:boolean}>;risks:string[];tokenEstimate:number;recommendation:string}>(null);
-  const [selectedFile,setSelectedFile]=useState<File>();
-  const [chunkSize,setChunkSize]=useState(1600);
-  const [chunkOverlap,setChunkOverlap]=useState(180);
-  const [pipelineBusy,setPipelineBusy]=useState(false);
-  const [fileResult,setFileResult]=useState<null|{filename:string;chunkCount:number;analysis:{quality:string;tokenEstimate:number;headings:number;sensitivePatterns:number;recommendations:string[]};previews:Array<{index:number;content:string;characters:number}>}>(null);
-  const [pipelineError,setPipelineError]=useState("");
-
-  const analyze=async()=>{
-    setPipelineBusy(true);setPipelineError("");
-    try{const response=await fetch("/api/analyze",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({agentId:`agent_${agent.id}`,text:activeText,sourceType:editorTab})});const payload=await response.json() as {analysis?:typeof promptAnalysis;error?:string};if(!response.ok)throw new Error(payload.error||"Analysis failed");setPromptAnalysis(payload.analysis||null)}catch(error){setPipelineError(error instanceof Error?error.message:"Analysis failed")}finally{setPipelineBusy(false)}
-  };
-  const upload=async()=>{
-    if(!selectedFile){setPipelineError("Choose a supported text file first.");return}
-    setPipelineBusy(true);setPipelineError("");
-    try{const form=new FormData();form.append("file",selectedFile);form.append("agentId",`agent_${agent.id}`);form.append("chunkSize",String(chunkSize));form.append("chunkOverlap",String(chunkOverlap));const response=await fetch("/api/files",{method:"POST",body:form});const payload=await response.json() as {file?:typeof fileResult;error?:string};if(!response.ok)throw new Error(payload.error||"Upload failed");setFileResult(payload.file||null)}catch(error){setPipelineError(error instanceof Error?error.message:"Upload failed")}finally{setPipelineBusy(false)}
-  };
-
-  return <div className="view lab-view">
-    <div className="agent-banner"><div className="agent-index">{String(agent.id).padStart(3,"0")}</div><div><div className="banner-line"><h2>{agent.agent}</h2><span className="status draft">Draft</span></div><p>{agent.squad} · {agent.activation}</p></div><div className="banner-actions"><button className="secondary" onClick={saveVersion} disabled={busy}>{lastVersion ? `Saved v${lastVersion.version}` : "Save draft"}</button><button className="primary" onClick={promote} disabled={busy}>Request promotion</button></div></div>
-    <div className="lab-grid"><section className="editor-panel"><div className="tabs">{(["prompt","routing","guardrails"] as const).map((tab)=><button key={tab} className={editorTab===tab?"active":""} onClick={()=>setEditorTab(tab)}>{tab === "prompt" ? "System prompt" : tab === "routing" ? "Routing rule" : "Guardrails"}</button>)}</div><div className="editor-meta"><span>Structured instruction</span><span>{activeText.length} characters</span></div><textarea aria-label={`Edit ${editorTab}`} value={activeText} onChange={(e)=>setActive(e.target.value)} spellCheck={false}/><div className="editor-footer"><span><i/> Unsaved changes are isolated to Sandbox</span><div><button onClick={analyze} disabled={pipelineBusy}>Analyze prompt</button><button onClick={saveVersion} disabled={busy}>Save new version</button></div></div></section><section className="test-panel"><div className="test-head"><div><p className="eyebrow">DETERMINISTIC POLICY CHECK</p><h3>Conversation preview</h3></div><span className="sandbox-badge">Sandbox</span></div><label>Customer message<textarea value={message} onChange={(e)=>setMessage(e.target.value)} aria-label="Customer test message"/></label><div className="sample-row">{sampleMessages.map((_,i)=><button key={i} onClick={()=>setMessage(sampleMessages[i])}>Test {i+1}</button>)}</div><button className="run-button" onClick={runEvaluation} disabled={busy}>{busy ? "Checking policy…" : "▶ Check this version"}</button>{result ? <div className="result-card"><div className="result-head"><span><i/>{result.scores.every((score)=>score>=90)?" Passed":" Failed"}</span><small>{result.latency} ms</small></div><p>{result.text}</p><div className="score-grid">{["Grounded","Language","Sales","Safety"].map((name,i)=><div key={name}><strong>{result.scores[i]}</strong><span>{name}</span></div>)}</div></div> : <div className="empty-result"><span>◎</span><strong>No policy check yet</strong><p>Validate this exact instruction version before promotion.</p></div>}</section></div>
-    <section className="knowledge-pipeline"><div className="pipeline-heading"><div><p className="eyebrow">PROMPT KNOWLEDGE PIPELINE</p><h3>Upload → Chunk → Analyze → Attach</h3><p>Prepare reliable retrieval context for this agent and inspect prompt quality before evaluation.</p></div><div className="pipeline-steps"><span className={selectedFile?"done":"active"}>1 Upload</span><span className={fileResult?"done":""}>2 Chunk</span><span className={fileResult||promptAnalysis?"done":""}>3 Analyze</span><span className={fileResult?"done":""}>4 Attach</span></div></div>
-      {pipelineError&&<div className="pipeline-error">{pipelineError}</div>}
-      <div className="pipeline-grid"><div className="upload-card"><div className="upload-drop"><span>⇧</span><strong>{selectedFile?selectedFile.name:"Drop a knowledge file here"}</strong><p>TXT, Markdown, JSON, CSV, HTML, XML, or YAML · up to 2 MB</p><label><input type="file" accept=".txt,.md,.json,.csv,.html,.xml,.yaml,.yml" onChange={(e)=>setSelectedFile(e.target.files?.[0])}/>{selectedFile?"Choose another file":"Browse files"}</label></div><div className="chunk-controls"><label>Chunk size<input type="number" min="800" max="8000" step="100" value={chunkSize} onChange={(e)=>setChunkSize(Number(e.target.value))}/><small>characters</small></label><label>Overlap<input type="number" min="0" max="2000" step="20" value={chunkOverlap} onChange={(e)=>setChunkOverlap(Number(e.target.value))}/><small>characters</small></label></div><button className="run-button" onClick={upload} disabled={pipelineBusy}>{pipelineBusy?"Processing…":"Process and analyze file"}</button></div>
-        <div className="analysis-card"><div className="analysis-head"><div><p className="eyebrow">PROMPT ANALYZER</p><h4>{promptAnalysis?promptAnalysis.recommendation:"Inspect this agent’s instructions"}</h4></div><div className={`analysis-score ${promptAnalysis&&promptAnalysis.score>=85?"good":""}`}><strong>{promptAnalysis?.score??"—"}</strong><span>/100</span></div></div>{promptAnalysis?<><div className="check-list">{promptAnalysis.checks.map((check)=><span className={check.pass?"pass":"fail"} key={check.name}><i>{check.pass?"✓":"!"}</i>{check.name}</span>)}</div><p className="token-note">Estimated context: {promptAnalysis.tokenEstimate} tokens</p>{promptAnalysis.risks.map((risk)=><div className="risk-note" key={risk}>{risk}</div>)}</>:<div className="analysis-empty"><span>◎</span><p>Run the analyzer to score grounding, language, tool boundaries, escalation, and success criteria.</p><button className="secondary" onClick={analyze} disabled={pipelineBusy}>Analyze current {editorTab}</button></div>}</div>
-        <div className="chunk-card"><p className="eyebrow">CHUNK INSPECTOR</p>{fileResult?<><div className="file-summary"><strong>{fileResult.filename}</strong><span>{fileResult.chunkCount} chunks · ~{fileResult.analysis.tokenEstimate} tokens</span><b className={fileResult.analysis.sensitivePatterns?"review":"ready"}>{fileResult.analysis.quality}</b></div><div className="chunk-previews">{fileResult.previews.map((chunk)=><article key={chunk.index}><header><strong>Chunk {chunk.index+1}</strong><span>{chunk.characters} chars</span></header><p>{chunk.content}</p></article>)}</div><ul className="file-recommendations">{fileResult.analysis.recommendations.map((item)=><li key={item}>{item}</li>)}</ul><button className="secondary attach-button" disabled>✓ {fileResult.chunkCount} chunks attached to {agent.agent}</button></>:<div className="analysis-empty"><span>▤</span><p>Processed chunks appear here with size, overlap, token estimates, and retrieval warnings.</p></div>}</div></div>
+function Marketplace({ query, setQuery, category, setCategory, filtered, onCreate, prompt, setPrompt, onInstall }: { query: string; setQuery: (value: string) => void; category: string; setCategory: (value: string) => void; filtered: MarketAgent[]; onCreate: (value: string) => void; prompt: string; setPrompt: (value: string) => void; onInstall: (agent: MarketAgent) => void }) {
+  const featured = catalog.find((agent) => agent.featured)!;
+  return <div className="marketplace-view">
+    <section className="market-hero">
+      <div className="hero-glow glow-one" /><div className="hero-glow glow-two" />
+      <div className="hero-copy"><span className="eyebrow"><i /> THE AGENT MARKETPLACE</span><h1>Find an agent.<br/><span>Or describe your own.</span></h1><p>Discover trusted AI agents for any job, or turn a plain-language idea into a production-ready agent in minutes.</p></div>
+      <form className="hero-composer" onSubmit={(event) => { event.preventDefault(); onCreate(prompt); }}><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the agent you want to create…" aria-label="Describe the agent you want to create" rows={2} /><div className="hero-composer-foot"><div><button type="button" className="composer-tool" aria-label="Attach files">＋</button><button type="button" className="context-pill"><span>⌘</span> Add knowledge</button></div><button className="hero-send" aria-label="Create agent" disabled={!prompt.trim()}>↑</button></div></form>
+      <div className="prompt-suggestions"><span>Try</span>{quickPrompts.map((item) => <button key={item} onClick={() => onCreate(item)}>{item}<i>↗</i></button>)}</div>
+    </section>
+    <section className="market-content">
+      <div className="market-toolbar"><div><h2>Explore agents</h2><p>Ready-to-use specialists built by trusted creators.</p></div><label className="market-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search agents" aria-label="Search agents" /></label></div>
+      <div className="category-row" aria-label="Agent categories">{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>
+      {category === "All" && !query && <button className="featured-card" onClick={() => onInstall(featured)}><div className="featured-copy"><span className="featured-label">FEATURED AGENT</span><div className={`agent-icon xl ${featured.accent}`}>{featured.icon}<i>✦</i></div><h3>{featured.name}</h3><p>{featured.description}</p><div className="creator-line"><span className="creator-avatar">N</span><span>By {featured.creator}</span><b>✓</b></div><div className="featured-actions"><span>View agent <i>↗</i></span><small>★ {featured.rating} · {formatInstalls(featured.installs)} installs</small></div></div><div className="featured-visual"><div className="brief-window"><div className="window-top"><span/><span/><span/><em>Research brief</em></div><div className="brief-body"><span className="brief-kicker">MARKET LANDSCAPE</span><strong>AI customer support<br/>platforms in 2026</strong><div className="brief-chart"><i/><i/><i/><i/><i/></div><div className="brief-sources"><span>8 sources</span><span>24 insights</span><span>3 recommendations</span></div></div></div><div className="citation-float">✓ Sources verified</div></div></button>}
+      <div className="agents-grid">{filtered.filter((agent) => !(category === "All" && !query && agent.featured)).map((agent) => <AgentCard key={agent.id} agent={agent} onClick={() => onInstall(agent)} />)}</div>
+      {!filtered.length && <div className="no-results"><span>⌕</span><h3>No agents found</h3><p>Try another search or create exactly what you need.</p><button onClick={() => onCreate(`Create an agent for ${query || category}`)}>Create this agent</button></div>}
+      <div className="creator-banner"><div><span className="eyebrow"><i /> BUILT FOR YOUR WORK</span><h2>Can’t find the right fit?</h2><p>Describe what you need. The Agent Architect will design the prompt, tools, workflow, and safety rules with you.</p><button onClick={() => onCreate("Help me design a custom agent for my business")}>Create a custom agent <span>→</span></button></div><div className="mini-flow"><div className="flow-bubble user">“Handle support in English and Spanish”</div><div className="flow-line"/><div className="flow-orb">✦</div><div className="flow-line"/><div className="flow-bubble result"><i>✓</i><span><strong>Luma Support</strong><small>8 capabilities configured</small></span></div></div></div>
     </section>
   </div>;
 }
 
-const mandatoryRegressionCases=[
-  ["Catalog before phone","A catalog request must deliver or explain the catalog before asking again for a phone number."],
-  ["Known phone suppression","A phone number already present in history must never be requested again."],
-  ["Uzbek Cyrillic lock","Uzbek Cyrillic remains Uzbek Cyrillic unless the customer clearly changes language."],
-  ["Verified DM receipt","Public text cannot say a DM or catalog was sent without a matching delivery receipt."],
-  ["Actor attribution","Meta echoes of AI messages cannot be classified as human replies or trigger takeover."],
-  ["No invented MOQ","The system must never state 30 items, or any minimum, without an approved source."],
-] as const;
+function AgentCard({ agent, onClick }: { agent: MarketAgent; onClick: () => void }) {
+  return <button className="agent-card" onClick={onClick}><div className="card-top"><div className={`agent-icon ${agent.accent}`}>{agent.icon}</div><span className="category-tag">{agent.category}</span></div><h3>{agent.name}{agent.verified && <i className="verified">✓</i>}</h3><strong>{agent.tagline}</strong><p>{agent.description}</p><div className="tag-list">{agent.tags.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}</div><div className="card-footer"><span><i className="creator-avatar sm">{agent.creator[0]}</i>{agent.creator}</span><span>★ {agent.rating} · {formatInstalls(agent.installs)}</span></div></button>;
+}
 
-function Evaluations({ runs, onRun }: { runs:Record<string,unknown>[]; onRun:()=>void }) { const recent=runs.slice(0,6);return <div className="view simple-view"><div className="view-intro"><div><p className="eyebrow">QUALITY BEFORE RELEASE</p><h2>Evaluation Center</h2><p>Run the incident-derived regression scenarios against the actual saved workflow graph.</p></div><button className="primary" onClick={onRun}>Open regression runner</button></div><div className="metric-grid"><Metric label="Stored checks" value={String(runs.length)} detail="Deterministic prompt checks" tone="blue"/><Metric label="Required score" value="≥ 90" detail="Every critical dimension" tone="violet"/><Metric label="Safety threshold" value="100" detail="No exceptions" tone="rose"/><Metric label="Mandatory cases" value={String(mandatoryRegressionCases.length)} detail="Production incidents covered" tone="gold"/></div><section className="evaluation-board"><div className="panel regression-suite"><div className="panel-head"><div><p className="eyebrow">MANDATORY REGRESSION SUITE</p><h3>Release-blocking customer journeys</h3></div><button className="secondary" onClick={onRun}>Run in Flow Builder →</button></div><div className="regression-list">{mandatoryRegressionCases.map(([title,expected],index)=><article key={title}><i>{String(index+1).padStart(2,"0")}</i><div><strong>{title}</strong><p>{expected}</p></div><b>Required</b></article>)}</div></div><div className="panel recent-runs"><p className="eyebrow">RECENT PROMPT CHECKS</p><h3>{recent.length?`${recent.length} recent results`:"No saved checks yet"}</h3>{recent.length?<div>{recent.map((run,index)=><article key={String(run.id||index)}><span className={run.status==="pass"?"pass":"fail"}>{String(run.status||"review")}</span><strong>{String(run.agentId||"Unknown agent")}</strong><small>{String(run.createdAt||"")}</small></article>)}</div>:<p>Save a prompt version and run its deterministic policy check.</p>}</div></section></div>; }
+function Builder({ messages, blueprint, prompt, setPrompt, submit, createAgent, busy, webEnabled, setWebEnabled, model, setModel, composerRef, onPublish }: { messages: ChatMessage[]; blueprint: Blueprint | null; prompt: string; setPrompt: (value: string) => void; submit: (event: FormEvent) => void; createAgent: (value: string) => void; busy: boolean; webEnabled: boolean; setWebEnabled: (value: boolean) => void; model: string; setModel: (value: string) => void; composerRef: React.RefObject<HTMLTextAreaElement | null>; onPublish: () => void }) {
+  return <div className={`builder-view ${blueprint ? "has-blueprint" : ""}`}>
+    <section className="chat-pane">
+      <div className="conversation"><div className="conversation-inner">{messages.map((message) => <div key={message.id} className={`message ${message.role}`}>
+        {message.role === "architect" && <span className="architect-avatar">✦</span>}
+        <div className="message-body">{message.role === "architect" && <strong>Agent Architect</strong>}<p>{message.text}</p>{message.id === "welcome" && messages.length === 1 && <div className="builder-suggestions">{quickPrompts.map((item) => <button key={item} onClick={() => createAgent(item)}><span>✦</span>{item}<i>→</i></button>)}</div>}</div>
+      </div>)}{busy && <div className="message architect"><span className="architect-avatar thinking">✦</span><div className="message-body"><strong>Agent Architect</strong><div className="thinking-line"><i/><i/><i/><span>Designing the blueprint</span></div></div></div>}</div></div>
+      <div className="chat-composer-wrap"><form className="chat-composer" onSubmit={submit}><textarea ref={composerRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); if (prompt.trim()) createAgent(prompt); } }} placeholder={blueprint ? `Ask to refine ${blueprint.name}…` : "Describe your agent…"} rows={2} aria-label="Message Agent Architect"/><div className="chat-composer-bottom"><div><button type="button" className="round-tool" aria-label="Attach file">＋</button><button type="button" className={`web-toggle ${webEnabled ? "on" : ""}`} onClick={() => setWebEnabled(!webEnabled)}><span>◎</span> Web</button><label className="model-picker"><select value={model} onChange={(event) => setModel(event.target.value)} aria-label="Builder model"><option>Auto</option><option>Fast</option><option>Powerful</option></select></label></div><div><button type="button" className="mic-button" aria-label="Voice input">◉</button><button className="send-button" aria-label="Send message" disabled={!prompt.trim() || busy}>↑</button></div></div></form><p className="composer-note">Agent Architect can make mistakes. Review tools and permissions before publishing.</p></div>
+    </section>
+    {blueprint && <BlueprintPanel blueprint={blueprint} onPublish={onPublish} busy={busy} />}
+  </div>;
+}
 
-function Releases({ releases, versions, onOpen }: { releases:Record<string,unknown>[]; versions:Record<string,unknown>[]; onOpen:()=>void }) { return <div className="view simple-view"><div className="view-intro"><div><p className="eyebrow">CONTROLLED DELIVERY</p><h2>Release Board</h2><p>Prompt versions may reach Staging only with evidence from that exact version. Production deploys remain intentionally external.</p></div><button className="primary" onClick={onOpen}>Prepare staging version</button></div><div className="release-lanes">{["Sandbox","Staging","Production"].map((lane,i)=><section className="release-lane" key={lane}><div className="lane-head"><span className={`lane-dot lane-${i}`}/><h3>{lane}</h3><b>{i===0?versions.length:i===1?releases.filter(r=>r.environment==="staging").length:releases.filter(r=>r.environment==="production").length}</b></div><div className="release-card"><span>{i===0?"Immutable drafts":i===1?"Evidence-gated queue":"Deployment boundary"}</span><strong>{i===0?"Run prompt and graph checks":i===1?"Exact version must pass":"Direct promotion disabled"}</strong><p>{i===0?"Save the prompt, run its policy check, then run every workflow regression scenario.":i===1?"Grounding, language, sales, safety, and latency evidence is required.":"Use the controlled Kotiba backend release and rollback process after staging approval."}</p></div></section>)}</div></div>; }
+function BlueprintPanel({ blueprint, onPublish, busy }: { blueprint: Blueprint; onPublish: () => void; busy: boolean }) {
+  const [tab, setTab] = useState<"overview" | "prompt" | "test">("overview");
+  const [testText, setTestText] = useState(blueprint.starters[0] || "Hello");
+  const [testResult, setTestResult] = useState("");
+  return <aside className="blueprint-panel"><div className="blueprint-head"><div><span>AGENT BLUEPRINT</span><h2>{blueprint.name}</h2></div><div className="blueprint-actions"><button aria-label="More actions">•••</button><button aria-label="Close blueprint">×</button></div></div><div className="blueprint-tabs"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>Overview</button><button className={tab === "prompt" ? "active" : ""} onClick={() => setTab("prompt")}>Instructions</button><button className={tab === "test" ? "active" : ""} onClick={() => setTab("test")}>Test</button></div>
+    {tab === "overview" && <div className="blueprint-body"><div className="agent-identity"><div className={`agent-icon lg ${blueprint.accent}`}>{blueprint.icon}</div><div><h3>{blueprint.name}</h3><p>{blueprint.tagline}</p><span className="draft-state"><i /> {blueprint.status === "published" ? "Published" : "Draft saved"}</span></div></div><SpecBlock title="Purpose"><p>{blueprint.purpose}</p></SpecBlock><SpecBlock title="Workflow"><div className="workflow-list">{blueprint.steps.map((step, index) => <div key={step.title}><span>{index + 1}</span><p><strong>{step.title}</strong><small>{step.detail}</small></p></div>)}</div></SpecBlock><SpecBlock title="Tools" action="Manage"><div className="capability-list">{blueprint.tools.map((tool) => <span key={tool}><i>{tool[0]}</i>{tool}<b>✓</b></span>)}</div></SpecBlock><SpecBlock title="Channels" action="Connect"><div className="chip-list">{blueprint.channels.map((channel) => <span key={channel}>{channel}</span>)}</div></SpecBlock><SpecBlock title="Guardrails"><ul className="guardrail-list">{blueprint.guardrails.map((rule) => <li key={rule}><span>✓</span>{rule}</li>)}</ul></SpecBlock><SpecBlock title="Conversation starters"><div className="starter-list">{blueprint.starters.map((starter) => <button key={starter}>{starter}<span>↗</span></button>)}</div></SpecBlock></div>}
+    {tab === "prompt" && <div className="blueprint-body"><div className="prompt-editor-head"><span>System instructions</span><button>Copy</button></div><pre className="prompt-preview">{blueprint.systemPrompt}</pre><SpecBlock title="Knowledge plan"><div className="knowledge-list">{blueprint.knowledge.map((item) => <div key={item}><span>◫</span><p><strong>{item}</strong><small>Recommended source</small></p><button>＋</button></div>)}</div></SpecBlock></div>}
+    {tab === "test" && <div className="blueprint-body test-body"><div className="test-stage"><div className="test-agent"><span className={`mini-avatar ${blueprint.accent}`}>{blueprint.icon}</span><div><strong>{blueprint.name}</strong><small>Preview sandbox</small></div></div>{testResult && <div className="test-response"><span className={`mini-avatar ${blueprint.accent}`}>{blueprint.icon}</span><p>{testResult}</p></div>}<div className="test-compose"><textarea value={testText} onChange={(event) => setTestText(event.target.value)} rows={3}/><button onClick={() => setTestResult(`I’ll handle that as ${blueprint.name}. I’ll first confirm the goal and required context, then use only the approved tools and return a clear next step.`)}>↑</button></div></div><p className="sandbox-note">Sandbox runs do not trigger external actions.</p></div>}
+    <div className="blueprint-footer"><button className="secondary-action">Run evaluation</button><button className="primary-action" onClick={onPublish} disabled={busy}>{blueprint.status === "published" ? "Published ✓" : "Publish agent"}</button></div>
+  </aside>;
+}
+
+function SpecBlock({ title, action, children }: { title: string; action?: string; children: React.ReactNode }) {
+  return <section className="spec-block"><div className="spec-title"><h4>{title}</h4>{action && <button>{action}</button>}</div>{children}</section>;
+}
+
+function Library({ agents, onOpen, onNew }: { agents: Blueprint[]; onOpen: (agent: Blueprint) => void; onNew: () => void }) {
+  return <div className="standard-view"><div className="page-heading"><div><span className="eyebrow"><i /> YOUR WORKSPACE</span><h1>My agents</h1><p>Draft, test, and manage every agent you create.</p></div><button className="primary-page-action" onClick={onNew}>＋ Create agent</button></div>{agents.length ? <div className="library-grid">{agents.map((agent) => <button className="library-card" key={agent.id} onClick={() => onOpen(agent)}><div className="library-card-head"><div className={`agent-icon ${agent.accent}`}>{agent.icon}</div><span className={`library-status ${agent.status}`}><i /> {agent.status}</span></div><h3>{agent.name}</h3><p>{agent.tagline}</p><div className="library-tools">{agent.tools.slice(0, 3).map((tool) => <span key={tool}>{tool}</span>)}</div><div className="library-foot"><span>Edited {new Date(agent.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span><i>→</i></div></button>)}</div> : <div className="empty-library"><div className="empty-orb">✦</div><h2>Your first agent starts with one sentence.</h2><p>Describe the outcome you want. Agent Architect will configure everything else with you.</p><button onClick={onNew}>Create your first agent</button></div>}</div>;
+}
+
+function Activity({ agents }: { agents: Blueprint[] }) {
+  const rows = agents.flatMap((agent) => [{ type: "created", agent, label: "Blueprint created", detail: "Purpose, tools, guardrails, and workflow configured" }, ...(agent.status === "published" ? [{ type: "published", agent, label: "Agent published", detail: "Available in your workspace library" }] : [])]);
+  return <div className="standard-view narrow"><div className="page-heading"><div><span className="eyebrow"><i /> WORKSPACE LOG</span><h1>Activity</h1><p>A transparent record of builds, tests, and releases.</p></div></div><div className="activity-panel"><div className="activity-filter"><button className="active">All activity</button><button>Builds</button><button>Releases</button><button>Runs</button></div>{rows.length ? rows.map((row, index) => <div className="activity-row" key={`${row.agent.id}-${row.type}`}><div className={`activity-mark ${row.type}`}>{row.type === "published" ? "↑" : "✦"}</div><div><strong>{row.label}</strong><p>{row.agent.name} · {row.detail}</p></div><time>{index ? "Recently" : "Just now"}</time></div>) : <div className="activity-empty"><span>↗</span><h3>No activity yet</h3><p>Your build history will appear here.</p></div>}</div></div>;
+}
+
+function Settings({ model, setModel, webEnabled, setWebEnabled, notify }: { model: string; setModel: (value: string) => void; webEnabled: boolean; setWebEnabled: (value: boolean) => void; notify: (text: string) => void }) {
+  return <div className="standard-view settings-view"><div className="page-heading"><div><span className="eyebrow"><i /> PERSONAL WORKSPACE</span><h1>Settings</h1><p>Manage defaults, permissions, and connected knowledge.</p></div></div><div className="settings-layout"><nav><button className="active">General</button><button>Models</button><button>Connections</button><button>Knowledge</button><button>Privacy</button><button>Billing</button></nav><div className="settings-card"><section><div><h3>Default model</h3><p>Choose how Agent Architect balances speed and reasoning.</p></div><select value={model} onChange={(event) => setModel(event.target.value)}><option>Auto</option><option>Fast</option><option>Powerful</option></select></section><section><div><h3>Web research</h3><p>Allow new agents to use current public information by default.</p></div><button className={`switch ${webEnabled ? "on" : ""}`} onClick={() => setWebEnabled(!webEnabled)} aria-label="Toggle web research"><i /></button></section><section><div><h3>Publishing approval</h3><p>Require a final human review before an agent can act outside the sandbox.</p></div><button className="switch on" aria-label="Publishing approval enabled"><i /></button></section><section className="connection-row"><div><h3>Connected knowledge</h3><p>Documents, websites, and data sources available to your agents.</p></div><button onClick={() => notify("Knowledge connector ready")}>Manage sources <span>→</span></button></section><div className="settings-save"><span>Changes are saved automatically.</span><button onClick={() => notify("Settings saved")}>Save changes</button></div></div></div></div>;
+}
+
+function AgentModal({ agent, onClose, onUse }: { agent: MarketAgent; onClose: () => void; onUse: () => void }) {
+  return <div className="modal-wrap" role="dialog" aria-modal="true" aria-label={`${agent.name} details`}><button className="modal-backdrop" onClick={onClose} aria-label="Close dialog"/><div className="agent-modal"><div className={`modal-hero ${agent.accent}`}><button className="modal-close" onClick={onClose} aria-label="Close">×</button><div className={`agent-icon hero-icon ${agent.accent}`}>{agent.icon}</div><span>{agent.category}</span><h2>{agent.name}</h2><p>{agent.tagline}</p></div><div className="modal-content"><div className="modal-creator"><span className="creator-avatar">{agent.creator[0]}</span><span><strong>{agent.creator}</strong><small>Verified creator</small></span><b>✓</b></div><p className="modal-description">{agent.description}</p><div className="modal-stats"><div><strong>{agent.rating}</strong><span>★ rating</span></div><div><strong>{formatInstalls(agent.installs)}</strong><span>installs</span></div><div><strong>{agent.tags.length + 3}</strong><span>capabilities</span></div></div><h3>What it can do</h3><div className="modal-capabilities">{agent.tags.map((tag) => <span key={tag}><i>✓</i>{tag}</span>)}<span><i>✓</i>Custom instructions</span><span><i>✓</i>Human handoff</span></div><div className="modal-actions"><button className="modal-secondary" onClick={onClose}>Preview</button><button className="modal-primary" onClick={onUse}>Use this agent <span>→</span></button></div><small className="modal-note">Creates a private, editable copy in your workspace.</small></div></div></div>;
+}

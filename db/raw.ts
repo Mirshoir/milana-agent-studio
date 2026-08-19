@@ -30,5 +30,7 @@ export async function ensureStudioSchema() {
     db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_file_chunks_file_index ON file_chunks(file_id, chunk_index)"),
     db.prepare("CREATE TABLE IF NOT EXISTS prompt_analyses (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, source_type TEXT NOT NULL, source_id TEXT, score INTEGER NOT NULL, analysis_json TEXT NOT NULL, created_at TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_prompt_analyses_agent_created ON prompt_analyses(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS marketplace_agents (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT 'workspace', name TEXT NOT NULL, category TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', visibility TEXT NOT NULL DEFAULT 'private', description TEXT NOT NULL, config_json TEXT NOT NULL, installs INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_marketplace_agents_owner_updated ON marketplace_agents(owner_id, updated_at DESC)"),
   ]);
 }

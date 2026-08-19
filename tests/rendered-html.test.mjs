@@ -19,16 +19,15 @@ async function callApi(path, body) {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("server-renders Milana Agent Studio", async () => {
+test("server-renders Agent Market", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /<title>Milana Agent Studio<\/title>/i);
-  assert.match(html, /Control room/);
-  assert.match(html, /41(?:<!-- -->)? agents indexed/);
-  assert.match(html, /Website Q&amp;A/);
-  assert.match(html, /Isolated from Kotiba production/);
-  assert.match(html, /Current Kotiba architecture/);
+  assert.match(html, /<title>Agent Market — Discover or build your own AI agent<\/title>/i);
+  assert.match(html, /Find an agent/);
+  assert.match(html, /Or describe your own/);
+  assert.match(html, /Explore agents/);
+  assert.match(html, /Create a custom agent/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 

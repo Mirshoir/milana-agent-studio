@@ -109,3 +109,17 @@ export const promptAnalyses = sqliteTable("prompt_analyses", {
   analysisJson: text("analysis_json").notNull(),
   createdAt: text("created_at").notNull(),
 }, (table) => [index("idx_prompt_analyses_agent_created").on(table.agentId, table.createdAt)]);
+
+export const marketplaceAgents = sqliteTable("marketplace_agents", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().default("workspace"),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  status: text("status").notNull().default("draft"),
+  visibility: text("visibility").notNull().default("private"),
+  description: text("description").notNull(),
+  configJson: text("config_json").notNull(),
+  installs: integer("installs").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_marketplace_agents_owner_updated").on(table.ownerId, table.updatedAt)]);

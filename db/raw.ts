@@ -36,6 +36,8 @@ export async function ensureStudioSchema() {
     db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_package_revisions_agent_version ON agent_package_revisions(agent_id, version)"),
     db.prepare("CREATE TABLE IF NOT EXISTS agent_evidence_records (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, revision_id TEXT, claim TEXT NOT NULL, status TEXT NOT NULL, source_type TEXT NOT NULL, source_url TEXT, confidence REAL NOT NULL, affects_json TEXT NOT NULL DEFAULT '[]', retrieved_at TEXT NOT NULL, created_at TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_agent_evidence_records_agent_created ON agent_evidence_records(agent_id, created_at DESC)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS agent_auditions (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT 'workspace', objective TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'completed', benchmark_json TEXT NOT NULL, candidates_json TEXT NOT NULL, winner_json TEXT NOT NULL, installed_team_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_agent_auditions_owner_created ON agent_auditions(owner_id, created_at DESC)"),
     db.prepare("CREATE TABLE IF NOT EXISTS agent_teams (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT 'workspace', name TEXT NOT NULL, objective TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', creation_mode TEXT NOT NULL DEFAULT 'prompt', research_json TEXT NOT NULL, config_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_agent_teams_owner_updated ON agent_teams(owner_id, updated_at DESC)"),
   ]);

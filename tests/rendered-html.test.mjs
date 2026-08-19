@@ -30,6 +30,8 @@ test("server-renders Agent Market", async () => {
   assert.match(html, /Explore agents/);
   assert.match(html, /Create a custom agent/);
   assert.match(html, /Build a complete agent team/);
+  assert.match(html, /Audition arena/);
+  assert.match(html, /Audition architectures/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 

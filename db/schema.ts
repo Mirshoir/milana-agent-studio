@@ -153,6 +153,19 @@ export const agentEvidenceRecords = sqliteTable("agent_evidence_records", {
   createdAt: text("created_at").notNull(),
 }, (table) => [index("idx_agent_evidence_records_agent_created").on(table.agentId, table.createdAt)]);
 
+export const agentAuditions = sqliteTable("agent_auditions", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().default("workspace"),
+  objective: text("objective").notNull(),
+  status: text("status").notNull().default("completed"),
+  benchmarkJson: text("benchmark_json").notNull(),
+  candidatesJson: text("candidates_json").notNull(),
+  winnerJson: text("winner_json").notNull(),
+  installedTeamId: text("installed_team_id"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_agent_auditions_owner_created").on(table.ownerId, table.createdAt)]);
+
 export const agentTeams = sqliteTable("agent_teams", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id").notNull().default("workspace"),

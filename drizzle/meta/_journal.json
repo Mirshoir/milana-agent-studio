@@ -43,6 +43,13 @@
       "when": 1787130156372,
       "tag": "0005_next_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787131719857,
+      "tag": "0006_fluffy_wasp",
+      "breakpoints": true
     }
   ]
 }

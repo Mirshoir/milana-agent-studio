@@ -12,6 +12,14 @@ type TeamAgent = {
   inputs: string[];
   outputs: string[];
   guardrails: string[];
+  model?: AgentModelRoute;
+};
+
+type AgentModelRoute = {
+  provider: "openai" | "google";
+  providerLabel: "OpenAI" | "Google Gemini";
+  model: string;
+  capability: "text" | "research" | "image" | "reasoning";
 };
 
 type TeamEdge = { id: string; from: string; to: string; label: string; condition: string; payload: string[] };
@@ -43,6 +51,16 @@ type AgentTeam = {
 type StoredTeamRow = { id: string; status: string; config_json: string; research_json: string; updated_at: string };
 
 const accents = ["violet", "sky", "pink", "orange", "emerald", "indigo", "gold", "lime"];
+
+const openAIModel = (capability: AgentModelRoute["capability"] = "text"): AgentModelRoute => ({ provider: "openai", providerLabel: "OpenAI", model: "gpt-5", capability });
+const geminiImageModel = (): AgentModelRoute => ({ provider: "google", providerLabel: "Google Gemini", model: "gemini-2.5-flash-image", capability: "image" });
+
+function modelForAgent(role: string, tools: string[] = []): AgentModelRoute {
+  if (/visual|image|creative producer/i.test(role) || tools.some((tool) => /image studio|image generation/i.test(tool))) return geminiImageModel();
+  if (/research/i.test(role) || tools.some((tool) => /web research/i.test(tool))) return openAIModel("research");
+  if (/lead|orchestrator|analyst|decision/i.test(role)) return openAIModel("reasoning");
+  return openAIModel("text");
+}
 
 const teamPatterns = [
   {
@@ -106,17 +124,62 @@ function titleCase(value: string) {
 
 function manualAgent(role: string, index: number): TeamAgent {
   const cleanRole = role.trim() || `Specialist ${index + 1}`;
-  return { id: `member_${crypto.randomUUID()}`, name: cleanRole.replace(/Agent$/i, "").trim(), role: cleanRole, purpose: `Own the ${cleanRole.toLowerCase()} responsibilities and return a verified result to the team.`, icon: cleanRole[0]?.toUpperCase() || "A", accent: accents[index % accents.length], tools: ["Workspace memory"], inputs: ["Assigned task", "Team context"], outputs: ["Verified result", "Open questions"], guardrails: ["Do not act outside the assigned responsibility", "Return evidence and uncertainty with every handoff"] };
+  return { id: `member_${crypto.randomUUID()}`, name: cleanRole.replace(/Agent$/i, "").trim(), role: cleanRole, purpose: `Own the ${cleanRole.toLowerCase()} responsibilities and return a verified result to the team.`, icon: cleanRole[0]?.toUpperCase() || "A", accent: accents[index % accents.length], tools: ["Workspace memory"], inputs: ["Assigned task", "Team context"], outputs: ["Verified result", "Open questions"], guardrails: ["Do not act outside the assigned responsibility", "Return evidence and uncertainty with every handoff"], model: modelForAgent(cleanRole) };
 }
 
 function fallbackTeam(prompt: string, research: TeamResearch, creationMode: "prompt" | "manual" = "prompt", manualRoles?: string[], manualName?: string): AgentTeam {
   const pattern = teamPatterns.find((item) => item.test.test(prompt)) || defaultPattern;
-  const roles = manualRoles?.length ? manualRoles.map((role, index) => manualAgent(role, index)) : pattern.roles.map((role, index) => ({ id: `member_${crypto.randomUUID()}`, name: String(role[0]).replace(/ Agent$/i, ""), role: String(role[0]), purpose: String(role[1]), icon: String(role[0])[0], accent: accents[index % accents.length], tools: role[2] as string[], inputs: role[3] as string[], outputs: role[4] as string[], guardrails: ["Use only verified evidence and approved tools", "Include provenance and uncertainty in every handoff"] }));
+  const roles = manualRoles?.length ? manualRoles.map((role, index) => manualAgent(role, index)) : pattern.roles.map((role, index) => ({ id: `member_${crypto.randomUUID()}`, name: String(role[0]).replace(/ Agent$/i, ""), role: String(role[0]), purpose: String(role[1]), icon: String(role[0])[0], accent: accents[index % accents.length], tools: role[2] as string[], inputs: role[3] as string[], outputs: role[4] as string[], guardrails: ["Use only verified evidence and approved tools", "Include provenance and uncertainty in every handoff"], model: modelForAgent(String(role[0]), role[2] as string[]) }));
   const edges = roles.slice(1).map((agent, index) => ({ id: `edge_${crypto.randomUUID()}`, from: roles[index].id, to: agent.id, label: index === 0 ? "research brief" : "approved handoff", condition: "Required inputs are present and the previous step is verified", payload: roles[index].outputs.slice(0, 2) }));
   if (roles.length > 2) edges.push({ id: `edge_${crypto.randomUUID()}`, from: roles[roles.length - 1].id, to: roles[0].id, label: "learning loop", condition: "A result, exception, or performance signal is available", payload: roles[roles.length - 1].outputs.slice(0, 2) });
   const name = manualName?.trim() || pattern.name;
   const updatedAt = new Date().toISOString();
   return { id: `team_${crypto.randomUUID()}`, name, description: pattern.description, objective: prompt.trim(), status: "draft", creationMode, agents: roles, edges, sharedKnowledge: ["Company and product context", "Approved policies and brand rules", "Customer and audience evidence", "Team handoff contract"], channels: /instagram|social/i.test(prompt) ? ["Workspace", "Instagram", "Analytics"] : /email/i.test(prompt) ? ["Workspace", "Email", "Analytics"] : ["Workspace", "Knowledge base"], triggers: ["New objective from a user", "New evidence or performance signal", "Scheduled review"], successMetrics: pattern.metrics, research, updatedAt };
+}
+
+type PilotPreset = "marketing" | "ceo";
+
+function pilotTeam(preset: PilotPreset, stable = false): AgentTeam {
+  const marketing = preset === "marketing";
+  const definition = marketing ? {
+    name: "Marketing Agent",
+    description: "A model-routed marketing agent team that researches, writes, creates imagery, distributes approved work, and measures outcomes.",
+    objective: "Turn an approved marketing objective into an evidence-backed, channel-ready campaign with original visuals and a measurable learning loop.",
+    roles: [
+      ["Growth Director", "Marketing Orchestrator", "Turns business goals into approved briefs, delegates specialist work, and owns final campaign coherence.", ["Workspace memory", "Approval queue", "Analytics"], ["Business objective", "Brand rules", "Performance signals"], ["Approved campaign brief", "Priority decisions"], openAIModel("reasoning")],
+      ["Audience Researcher", "Research Subagent", "Builds evidence-backed audience, competitor, offer, and channel insight before creative work starts.", ["Web research", "Knowledge base"], ["Research question", "Known audience evidence"], ["Audience brief", "Evidence links"], openAIModel("research")],
+      ["Campaign Copywriter", "Text Subagent", "Creates concise, on-brand copy variants for ads, social, landing pages, and email from an approved brief.", ["Content workspace", "Brand knowledge"], ["Approved brief", "Voice guide"], ["Copy package", "Message variants"], openAIModel("text")],
+      ["Visual Creator", "Image Subagent", "Generates original campaign imagery and visual directions that follow the approved brief and brand constraints.", ["Gemini image generation", "Brand assets"], ["Creative brief", "Brand references"], ["Generated images", "Visual rationale"], geminiImageModel()],
+      ["Performance Analyst", "Measurement Subagent", "Evaluates campaign results, identifies meaningful changes, and returns clear recommendations to the Growth Director.", ["Analytics", "Data analysis"], ["Campaign results", "Success metrics"], ["Performance report", "Next-test recommendations"], openAIModel("reasoning")],
+    ] as const,
+    metrics: ["Qualified actions influenced", "Content-to-conversion rate", "Creative approval rate", "Learning velocity per campaign"],
+    channels: ["Workspace", "Instagram", "Email", "Analytics"],
+  } : {
+    name: "CEO Assistant",
+    description: "A model-routed executive office that researches, analyzes, drafts, prepares meetings, and keeps decisions moving.",
+    objective: "Give the CEO a reliable daily operating partner for priorities, evidence-backed decisions, executive communication, meetings, and follow-through.",
+    roles: [
+      ["Chief of Staff", "Executive Orchestrator", "Triages requests, protects executive attention, delegates specialist work, and synthesizes final recommendations.", ["Workspace memory", "Approval queue", "Task board"], ["Executive objective", "Company context", "Current priorities"], ["Executive brief", "Priority decision"], openAIModel("reasoning")],
+      ["Executive Researcher", "Research Subagent", "Builds concise, sourced company, market, partner, and stakeholder research for executive decisions.", ["Web research", "Knowledge base"], ["Research question", "Known context"], ["Evidence memo", "Source list"], openAIModel("research")],
+      ["Decision Analyst", "Analysis Subagent", "Frames options, trade-offs, risks, reversibility, and decision criteria without inventing certainty.", ["Workspace memory", "Analysis tools"], ["Decision question", "Evidence memo"], ["Decision matrix", "Recommendation with risks"], openAIModel("reasoning")],
+      ["Briefing Writer", "Writing Subagent", "Turns verified inputs into clear memos, updates, announcements, and stakeholder-ready drafts.", ["Content workspace", "Voice guide"], ["Approved facts", "Audience and intent"], ["Executive draft", "Fact-check notes"], openAIModel("text")],
+      ["Meeting & Follow-up", "Operations Subagent", "Prepares agendas and briefing packs, then converts approved outcomes into tracked actions and owner-ready follow-up.", ["Calendar", "Task board", "Workspace memory"], ["Meeting context", "Participants", "Approved decisions"], ["Meeting brief", "Action register", "Follow-up draft"], openAIModel("text")],
+    ] as const,
+    metrics: ["Executive time saved", "Decision cycle time", "Brief acceptance rate", "Action follow-through rate"],
+    channels: ["Workspace", "Calendar", "Email", "Knowledge base"],
+  };
+  const agents: TeamAgent[] = definition.roles.map((role, index) => ({ id: stable ? `pilot_${preset}_agent_${index + 1}` : `member_${crypto.randomUUID()}`, name: role[0], role: role[1], purpose: role[2], icon: role[0][0], accent: accents[index % accents.length], tools: [...role[3]], inputs: [...role[4]], outputs: [...role[5]], guardrails: ["Use only verified evidence and approved tools", "Never perform an external action without the required human approval", "Return uncertainty and provenance with every handoff"], model: role[6] }));
+  const lead = agents[0];
+  const edges = agents.slice(1).flatMap((agent) => [
+    { id: `edge_${crypto.randomUUID()}`, from: lead.id, to: agent.id, label: "specialist assignment", condition: "The objective and required inputs are present", payload: ["Approved task", "Relevant team context"] },
+    { id: `edge_${crypto.randomUUID()}`, from: agent.id, to: lead.id, label: "verified specialist result", condition: "The specialist output is complete and guardrails pass", payload: agent.outputs.slice(0, 2) },
+  ]);
+  const updatedAt = new Date().toISOString();
+  return { id: stable ? `pilot_${preset}_v1` : `team_${crypto.randomUUID()}`, name: definition.name, description: definition.description, objective: definition.objective, status: "draft", creationMode: "prompt", agents, edges, sharedKnowledge: ["Company strategy and current priorities", "Approved brand and communication rules", "Product, customer, and performance evidence", "Human approval policy", "Team handoff contract"], channels: [...definition.channels], triggers: ["New objective from the owner", "Scheduled daily review", "New evidence or performance signal"], successMetrics: [...definition.metrics], research: { mode: "domain-blueprint", summary: `Milana pilot architecture for ${definition.name}. Roles are separated by responsibility, routed to the appropriate model capability, and connected through approval-aware handoffs.`, findings: [
+    { title: "Model routing by capability", detail: marketing ? "Text, research, and reasoning tasks route to OpenAI; original campaign imagery routes to Google Gemini." : "Executive research, reasoning, and writing tasks route to distinct OpenAI subagents with role-specific instructions.", confidence: "high" },
+    { title: "Chief agent owns synthesis", detail: "Specialists never publish or act independently; verified results return to the orchestrator for approval and synthesis.", confidence: "high" },
+    { title: "Explicit handoff contracts", detail: "Every specialist receives approved inputs and returns named outputs with provenance and uncertainty.", confidence: "high" },
+  ], sources: [], gaps: ["Connect provider API keys before live model runs", "Connect company knowledge and external action tools before production activation"], completedAt: updatedAt }, updatedAt };
 }
 
 function safePublicUrl(value: string) {
@@ -141,7 +204,7 @@ async function siteResearch(prompt: string, website: string): Promise<TeamResear
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 9000);
-    const response = await fetch(seed, { headers: { "user-agent": "AgentMarketResearch/1.0", accept: "text/html" }, redirect: "follow", signal: controller.signal });
+    const response = await fetch(seed, { headers: { "user-agent": "MilanaAgentStudioResearch/1.0", accept: "text/html" }, redirect: "follow", signal: controller.signal });
     clearTimeout(timeout);
     if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) return null;
     const html = (await response.text()).slice(0, 500000);
@@ -200,7 +263,7 @@ async function liveResearchTeam(prompt: string, website: string, requestedModel:
     for (const source of action?.sources || []) if (source.url) sourceMap.set(source.url, source.title || new URL(source.url).hostname);
   }
   const updatedAt = new Date().toISOString();
-  const agents = parsed.agents.map((agent, index) => ({ ...agent, id: agent.id || `member_${index + 1}`, icon: agent.name[0]?.toUpperCase() || "A", accent: accents[index % accents.length] }));
+  const agents = parsed.agents.map((agent, index) => ({ ...agent, id: agent.id || `member_${index + 1}`, icon: agent.name[0]?.toUpperCase() || "A", accent: accents[index % accents.length], model: modelForAgent(agent.role, agent.tools) }));
   const knownIds = new Set(agents.map((agent) => agent.id));
   const edges = parsed.edges.filter((edge) => knownIds.has(edge.from) && knownIds.has(edge.to)).map((edge) => ({ ...edge, id: `edge_${crypto.randomUUID()}` }));
   const research: TeamResearch = { mode: "live-ai", summary: `Completed web research before designing ${parsed.name}. The architecture is based on current evidence and the requested operating context.`, findings: parsed.findings, sources: Array.from(sourceMap, ([url, title]) => ({ title, url })).slice(0, 12), gaps: sourceMap.size ? ["Private company data and permissions still require owner review"] : ["No public sources were returned; treat company-specific claims as assumptions"], completedAt: updatedAt };
@@ -209,7 +272,7 @@ async function liveResearchTeam(prompt: string, website: string, requestedModel:
 
 function normalizeTeam(input: AgentTeam): AgentTeam {
   const updatedAt = new Date().toISOString();
-  const agents = input.agents.slice(0, 20).map((agent, index) => ({ ...agent, id: agent.id || `member_${crypto.randomUUID()}`, name: String(agent.name || `Agent ${index + 1}`).slice(0, 80), role: String(agent.role || "Specialist").slice(0, 120), purpose: String(agent.purpose || "").slice(0, 1000), icon: String(agent.icon || agent.name?.[0] || "A").slice(0, 2), accent: accents.includes(agent.accent) ? agent.accent : accents[index % accents.length], tools: (agent.tools || []).slice(0, 20), inputs: (agent.inputs || []).slice(0, 20), outputs: (agent.outputs || []).slice(0, 20), guardrails: (agent.guardrails || []).slice(0, 20) }));
+  const agents = input.agents.slice(0, 20).map((agent, index) => ({ ...agent, id: agent.id || `member_${crypto.randomUUID()}`, name: String(agent.name || `Agent ${index + 1}`).slice(0, 80), role: String(agent.role || "Specialist").slice(0, 120), purpose: String(agent.purpose || "").slice(0, 1000), icon: String(agent.icon || agent.name?.[0] || "A").slice(0, 2), accent: accents.includes(agent.accent) ? agent.accent : accents[index % accents.length], tools: (agent.tools || []).slice(0, 20), inputs: (agent.inputs || []).slice(0, 20), outputs: (agent.outputs || []).slice(0, 20), guardrails: (agent.guardrails || []).slice(0, 20), model: agent.model && ["openai", "google"].includes(agent.model.provider) ? agent.model : modelForAgent(agent.role, agent.tools) }));
   const ids = new Set(agents.map((agent) => agent.id));
   const edges = (input.edges || []).filter((edge) => ids.has(edge.from) && ids.has(edge.to) && edge.from !== edge.to).slice(0, 60).map((edge) => ({ ...edge, id: edge.id || `edge_${crypto.randomUUID()}`, label: String(edge.label || "handoff").slice(0, 100), condition: String(edge.condition || "Previous work is verified").slice(0, 500), payload: (edge.payload || []).slice(0, 20) }));
   return { ...input, id: input.id || `team_${crypto.randomUUID()}`, name: String(input.name || "New agent team").slice(0, 100), description: String(input.description || "A coordinated agent team.").slice(0, 1000), objective: String(input.objective || "").slice(0, 4000), status: input.status === "published" ? "published" : "draft", creationMode: input.creationMode === "manual" ? "manual" : "prompt", agents, edges, sharedKnowledge: (input.sharedKnowledge || []).slice(0, 30), channels: (input.channels || []).slice(0, 20), triggers: (input.triggers || []).slice(0, 20), successMetrics: (input.successMetrics || []).slice(0, 20), research: input.research || domainResearch(input.objective || "general operations"), updatedAt };
@@ -221,9 +284,21 @@ async function saveTeam(team: AgentTeam) {
     .bind(team.id, "workspace", team.name, team.objective, team.status, team.creationMode, JSON.stringify(team.research), JSON.stringify(team), team.updatedAt, team.updatedAt).run();
 }
 
+async function seedPilotTeam(preset: PilotPreset) {
+  const team = pilotTeam(preset, true);
+  await getD1().prepare("INSERT OR IGNORE INTO agent_teams (id, owner_id, name, objective, status, creation_mode, research_json, config_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(team.id, "workspace", team.name, team.objective, team.status, team.creationMode, JSON.stringify(team.research), JSON.stringify(team), team.updatedAt, team.updatedAt).run();
+  const row = await getD1().prepare("SELECT id, status, config_json, research_json, updated_at FROM agent_teams WHERE id = ? AND owner_id = ? LIMIT 1").bind(team.id, "workspace").first<StoredTeamRow>();
+  if (!row) return team;
+  try {
+    return { ...JSON.parse(row.config_json) as AgentTeam, id: row.id, status: row.status === "published" ? "published" as const : "draft" as const, research: JSON.parse(row.research_json) as TeamResearch, updatedAt: row.updated_at };
+  } catch { return team; }
+}
+
 export async function GET() {
   try {
     await ensureStudioSchema();
+    await Promise.all([seedPilotTeam("marketing"), seedPilotTeam("ceo")]);
     const result = await getD1().prepare("SELECT id, status, config_json, research_json, updated_at FROM agent_teams WHERE owner_id = ? ORDER BY updated_at DESC LIMIT 100").bind("workspace").all<StoredTeamRow>();
     const teams = ((result.results || []) as StoredTeamRow[]).flatMap((row) => { try { const team = JSON.parse(row.config_json) as AgentTeam; return [{ ...team, id: row.id, status: row.status === "published" ? "published" as const : "draft" as const, research: JSON.parse(row.research_json) as TeamResearch, updatedAt: row.updated_at }]; } catch { return []; } });
     return Response.json({ teams });
@@ -233,7 +308,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await ensureStudioSchema();
-    const body = await request.json() as { action?: string; prompt?: string; website?: string; model?: string; team?: AgentTeam; roles?: string[]; name?: string };
+    const body = await request.json() as { action?: string; prompt?: string; website?: string; model?: string; team?: AgentTeam; roles?: string[]; name?: string; preset?: PilotPreset };
+    if (body.action === "install-preset" && (body.preset === "marketing" || body.preset === "ceo")) {
+      const team = await seedPilotTeam(body.preset);
+      return Response.json({ team });
+    }
     if (body.action === "generate") {
       const prompt = body.prompt?.trim() || "";
       if (prompt.length < 20) return Response.json({ error: "Describe the team’s objective, audience, and expected outcome in a little more detail." }, { status: 400 });

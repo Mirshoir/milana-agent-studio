@@ -1,8 +1,7 @@
-# vinext-starter
+# Milana Agent Studio
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+A multi-agent studio running on [vinext](https://github.com/cloudflare/vinext),
+Cloudflare D1, and model-routed agent execution.
 
 ## Prerequisites
 
@@ -93,6 +92,20 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 - `npm run build`: verify the vinext build output
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+
+## Live Model Connections
+
+Copy `.env.example` to `.env.local` for local development, then provide the
+provider keys you want to enable:
+
+- `OPENAI_API_KEY`: text, research, and reasoning subagents
+- `OPENAI_MODEL`: optional OpenAI model override (defaults to `gpt-5`)
+- `GEMINI_API_KEY`: image-generation subagents
+- `GEMINI_IMAGE_MODEL`: optional Gemini image model override (defaults to
+  `gemini-2.5-flash-image`)
+
+Pilot teams can be installed and reviewed without keys. A key is required only
+when running a live model test.
 
 ## Learn More
 

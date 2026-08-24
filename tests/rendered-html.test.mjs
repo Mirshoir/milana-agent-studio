@@ -19,14 +19,15 @@ async function callApi(path, body) {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("server-renders Agent Market", async () => {
+test("server-renders Milana Agent Studio", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /<title>Agent Market — Discover or build your own AI agent<\/title>/i);
-  assert.match(html, /Discover verified agents/);
-  assert.match(html, /Build evidence-backed teams/);
-  assert.match(html, /permissions, evidence, guardrails, wiring, and release readiness/);
+  assert.match(html, /<title>Milana Agent Studio — Real AI agent teams<\/title>/i);
+  assert.match(html, /Real agents for real work/);
+  assert.match(html, /Specialists, models, and handoffs included/);
+  assert.match(html, /Marketing Agent/);
+  assert.match(html, /CEO Assistant/);
   assert.match(html, /Explore agents/);
   assert.match(html, /Create a custom agent/);
   assert.match(html, /Build a complete agent team/);

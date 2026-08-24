@@ -11,13 +11,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const image = `${protocol}://${host}/og.png`;
-  const title = "Agent Market — Discover or build your own AI agent";
-  const description = "Discover AI agents or turn one prompt into a researched, wired agent team with explicit roles, handoffs, shared knowledge, and guardrails.";
+  const title = "Milana Agent Studio — Real AI agent teams";
+  const description = "Build and run model-routed AI agent teams with specialist roles, explicit handoffs, shared knowledge, and human approvals.";
   return {
     title,
     description,
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
-    openGraph: { title, description, images: [{ url: image, width: 1536, height: 1024, alt: "Agent Market — One prompt becomes a researched, wired agent team" }] },
+    openGraph: { title, description, images: [{ url: image, width: 1536, height: 1024, alt: "Milana Agent Studio — specialist AI teams with real model routing" }] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }

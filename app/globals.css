@@ -379,6 +379,63 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .audition-view, .audition-results-view { min-height: calc(100vh - 58px); }.audition-hero { min-height: 390px; padding: 45px 18px; }.audition-copy h1 { font-size: 42px; }.audition-copy > p { font-size: 11px; }.arena-principles { gap: 10px; }.audition-start { padding: 28px 12px 18px; }.audition-form-card, .audition-explain { padding: 17px; }.recent-auditions { padding: 8px 12px 50px; }.audition-results-head { height: 55px; padding-inline: 10px; }.synthetic-pill { display: none; }.audition-results-main { padding: 18px 10px 55px; }.verdict-card { padding: 18px; grid-template-columns: 1fr; text-align: left; }.winner-medal { width: 54px; height: 54px; border-radius: 17px; }.verdict-copy h1 { font-size: 25px; }.verdict-score { grid-column: auto; }.audition-objective { grid-template-columns: 1fr; }.results-heading { align-items: flex-start; }.results-heading > p { display: none; }.candidate-grid { grid-template-columns: 1fr; }.candidate-grid > article:last-child { grid-column: auto; }.stress-matrix > header, .stress-row { min-width: 680px; }.winner-rationale { padding: 20px; }.winner-rationale h2 { font-size: 21px; }
 }
 
+/* Comfortable type and icon scale. Keep display headings intact while lifting
+   dense UI copy and controls out of the 6–10px range. */
+body { font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.app-shell :where(p, small, label, input, textarea, select, kbd) { font-size: 13px !important; }
+.app-shell button { font-size: 13px !important; }
+.app-shell :where(
+  .eyebrow, .section-label, .draft-pill, .category-tag, .featured-label,
+  .pilot-status, .pilot-card-head > div span, .pilot-models span,
+  .pilot-subagents > span, .tag-list span, .library-tools span,
+  .chip-list span, .card-footer, .sample-data, .library-status,
+  .team-status, .window-top em, .brief-kicker, .brief-sources span,
+  .citation-float, .synthetic-pill, .candidate-kind,
+  .prompt-suggestions > span
+) { font-size: 12px !important; }
+.app-shell :where(
+  .recent-agent strong, .upgrade-card strong, .profile-row strong,
+  .pilot-card-head > div strong, .agent-card > strong,
+  .creator-line, .featured-actions > span
+) { font-size: 14px !important; }
+
+.app-shell { grid-template-columns: 270px minmax(0, 1fr); }
+.brand strong { font-size: 17px; }
+.brand-symbol, .mobile-brand { width: 34px; height: 34px; font-size: 18px; }
+.glyph { width: 28px; font-size: 18px; }
+.new-agent { height: 46px; grid-template-columns: 30px 1fr auto; }
+.nav-button { height: 44px; grid-template-columns: 32px 1fr auto; }
+.nav-button span:not(.glyph) { font-size: 14px; }
+.mini-avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 14px; }
+.upgrade-card { min-height: 64px; grid-template-columns: 40px 1fr 22px; }
+.upgrade-card .upgrade-icon { width: 38px; height: 38px; font-size: 18px; }
+.profile-row { min-height: 56px; grid-template-columns: 38px 1fr 24px; }
+.user-avatar, .avatar-button { width: 36px; height: 36px; font-size: 13px; }
+.topbar { min-height: 68px; }
+.icon-button, .composer-tool, .hero-send, .send-button,
+.round-tool, .mic-button, .menu-button { width: 40px; height: 40px; font-size: 18px !important; }
+.agent-icon { width: 52px; height: 52px; border-radius: 15px; font-size: 20px; }
+.agent-icon.xl { width: 60px; height: 60px; border-radius: 18px; }
+.agent-icon.lg { width: 64px; height: 64px; border-radius: 19px; font-size: 23px; }
+.pilot-card-head { grid-template-columns: 66px 1fr auto; }
+.pilot-card-head > i { width: 36px; height: 36px; font-size: 18px; }
+.pilot-subagents i { width: 22px; height: 22px; font-size: 10px; }
+.creator-avatar { width: 31px; height: 31px; font-size: 12px; }
+.creator-avatar.sm { width: 25px; height: 25px; font-size: 12px; }
+.agent-icon.xl i { width: 24px; height: 24px; font-size: 11px; }
+.nav-button em { font-size: 12px; }
+.upgrade-card i { font-size: 16px; }
+.flow-bubble { font-size: 13px; }
+.flow-orb { width: 34px; height: 34px; font-size: 14px; }
+.agent-card { min-height: 310px; }
+.pilot-card { min-height: 370px; }
+
+@media (max-width: 860px) {
+  .app-shell { display: block; }
+  .sidebar { width: 290px; }
+  .mobile-brand { display: grid; width: 32px; height: 32px; font-size: 16px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *:before, *:after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

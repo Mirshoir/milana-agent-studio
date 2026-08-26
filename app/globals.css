@@ -1,4 +1,8 @@
 :root {
+  --font-ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-code: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-geist-sans: var(--font-ui);
+  --font-geist-mono: var(--font-code);
   --ink: #17181b;
   --muted: #6d7078;
   --line: #e7e4de;
@@ -15,7 +19,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--canvas); color: var(--ink); }
-body { font-family: var(--font-geist-sans), Arial, sans-serif; }
+body { font-family: var(--font-ui); }
 button, input, textarea, select { font: inherit; }
 button { color: inherit; }
 button, select { cursor: pointer; }
@@ -382,6 +386,13 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* Comfortable type and icon scale. Keep display headings intact while lifting
    dense UI copy and controls out of the 6–10px range. */
 body { font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.app-shell h1, .app-shell h2, .app-shell h3,
+.app-shell h4, .app-shell h5, .app-shell h6 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -.025em;
+}
+.brief-body > strong { font-family: var(--font-ui); letter-spacing: -.02em; }
 .app-shell :where(p, small, label, input, textarea, select, kbd) { font-size: 13px !important; }
 .app-shell button { font-size: 13px !important; }
 .app-shell :where(
